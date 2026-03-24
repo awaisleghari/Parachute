@@ -74,12 +74,12 @@ function Sel({ on, onClick, children, sub }) {
 
 function Fld({ label, value, onChange, type, prefix, placeholder, help, suffix }) {
   const [f, setF] = useState(false);
-  return <div style={{ marginBottom: 14 }}>
+  return <div style={{ marginBottom: 14, minWidth: 0 }}>
     {label && <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</label>}
-    <div style={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: 9, border: f ? "2px solid " + T : "1.5px solid #D3D1C7", padding: f ? "0 12px" : "0 13px", boxShadow: f ? "0 0 0 3px rgba(10,107,92,.06)" : "none", transition: "all .12s" }}>
+    <div style={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: 9, border: f ? "2px solid " + T : "1.5px solid #D3D1C7", padding: f ? "0 12px" : "0 13px", boxShadow: f ? "0 0 0 3px rgba(10,107,92,.06)" : "none", transition: "all .12s", minWidth: 0 }}>
       {prefix && <span style={{ color: "#888", fontSize: 14, marginRight: 4 }}>{prefix}</span>}
-      <input type={type || "text"} value={value} onChange={e => onChange(e.target.value)} onFocus={() => setF(true)} onBlur={() => setF(false)} placeholder={placeholder} style={{ flex: 1, border: "none", outline: "none", fontSize: 14, padding: "9px 0", background: "transparent", color: "#1A1A18" }} />
-      {suffix && <span style={{ color: "#999", fontSize: 11 }}>{suffix}</span>}
+      <input type={type || "text"} value={value} onChange={e => onChange(e.target.value)} onFocus={() => setF(true)} onBlur={() => setF(false)} placeholder={placeholder} style={{ flex: 1, border: "none", outline: "none", fontSize: 14, padding: "9px 0", background: "transparent", color: "#1A1A18", minWidth: 0, width: "100%" }} />
+      {suffix && <span style={{ color: "#999", fontSize: 11, flexShrink: 0 }}>{suffix}</span>}
     </div>
     {help && <p style={{ fontSize: 10, color: "#999", marginTop: 2, marginBottom: 0, lineHeight: 1.3 }}>{help}</p>}
   </div>;
@@ -116,7 +116,7 @@ function TopBar({ step, onBack }) {
   return <div>
     <div style={{ background: T, padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-        <span style={{ fontSize: 16, color: "#fff" }}>{"\u2602"}</span>
+        <Logo size={18} color="#fff" />
         <span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span>
       </div>
       <span style={{ fontSize: 10, color: "rgba(255,255,255,.5)" }}>{step + " of " + TS}</span>
@@ -132,54 +132,160 @@ function TopBar({ step, onBack }) {
   </div>;
 }
 
+/* ═══════════════════ LOGO SVG ═══════════════════ */
+function Logo({ size = 32, color = "#fff" }) {
+  return <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 4C12 4 5.5 10 4.2 18c-.1.8.5 1.5 1.3 1.5h13V33c0 1.7-1.3 3-3 3s-3-1.3-3-3c0-.6-.4-1-1-1s-1 .4-1 1c0 2.8 2.2 5 5 5s5-2.2 5-5V19.5h13.5c.8 0 1.4-.7 1.3-1.5C34.5 10 28 4 20 4z" fill={color} fillOpacity=".9"/>
+  </svg>;
+}
+
 /* ═══════════════════ LANDING ═══════════════════ */
 function Landing({ onStart }) {
   const [agreed, setAgreed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [hov, setHov] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.href = "https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    setTimeout(() => setLoaded(true), 80);
+  }, []);
 
-  return <div style={{ minHeight: "100vh", background: T, color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "36px 24px", position: "relative", overflow: "hidden" }}>
-    <div style={{ position: "absolute", top: -100, right: -100, width: 350, height: 350, borderRadius: "50%", background: "rgba(255,255,255,.03)" }} />
-    <div style={{ position: "absolute", bottom: -60, left: -60, width: 250, height: 250, borderRadius: "50%", background: "rgba(255,255,255,.02)" }} />
+  const DF = "'DM Serif Display', Georgia, serif";
 
-    <Fade>
-      <div style={{ textAlign: "center", maxWidth: 420 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 9, marginBottom: 28 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 11, background: "rgba(255,255,255,.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>{"\u2602"}</div>
-          <span style={{ fontSize: 18, fontWeight: 500, letterSpacing: ".02em" }}>Parachute</span>
-        </div>
+  const features = [
+    { k: "calc", t: "Legal minimums + court estimates", d: "Statutory floor and Bardal-factor range, explained in plain English", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
+    { k: "letter", t: "Negotiation letter", d: "Five tone variants matched to your offer, from aggressive to strategic", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+    { k: "plan", t: "Action plan + checklists", d: "Timed steps from day one through your first lawyer meeting", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> },
+    { k: "report", t: "Lawyer report", d: "Structured intake summary formatted for counsel. Save time and money.", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
+  ];
 
-        <h1 style={{ fontFamily: "Georgia,serif", fontSize: 38, fontWeight: 400, margin: "0 0 14px", lineHeight: 1.1 }}>Know what{"\n"}you're owed.</h1>
-        <p style={{ fontSize: 16, color: "rgba(255,255,255,.65)", lineHeight: 1.6, maxWidth: 320, margin: "0 auto 32px" }}>Free severance analysis based on Canadian employment law. In 2 minutes, not 2 billable hours.</p>
+  return <div style={{ minHeight: "100vh", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px", position: "relative", overflow: "hidden" }}>
+    {/* Multi-layer background */}
+    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #032E27 0%, #064E3E 20%, #0A6B5C 40%, #0D7D6A 55%, #0A6B5C 70%, #073D34 100%)", zIndex: 0 }} />
+    {/* Mesh overlay for depth */}
+    <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 20% 20%, rgba(16,180,140,.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(6,78,62,.6) 0%, transparent 50%), radial-gradient(ellipse at 50% 0%, rgba(159,225,203,.1) 0%, transparent 40%)", zIndex: 0 }} />
+    {/* Noise grain texture */}
+    <div style={{ position: "absolute", inset: 0, opacity: .035, zIndex: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")", backgroundSize: "128px 128px" }} />
+    {/* Animated ambient light */}
+    <div style={{ position: "absolute", top: "-20%", right: "-5%", width: 550, height: 550, borderRadius: "50%", background: "radial-gradient(circle, rgba(159,225,203,.14) 0%, transparent 60%)", filter: "blur(60px)", animation: "float1 9s ease-in-out infinite", zIndex: 0 }} />
+    <div style={{ position: "absolute", bottom: "-15%", left: "-10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(10,180,130,.1) 0%, transparent 60%)", filter: "blur(70px)", animation: "float2 11s ease-in-out infinite", zIndex: 0 }} />
+    <div style={{ position: "absolute", top: "30%", left: "55%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,.04) 0%, transparent 60%)", filter: "blur(40px)", animation: "float3 7s ease-in-out infinite", zIndex: 0 }} />
+    {/* Subtle top highlight */}
+    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 200, background: "linear-gradient(180deg, rgba(159,225,203,.06) 0%, transparent 100%)", zIndex: 0 }} />
+    <style>{`
+      @keyframes float1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-25px, 20px) scale(1.03); } }
+      @keyframes float2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px, -25px) scale(1.05); } }
+      @keyframes float3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-15px, -18px); } }
+    `}</style>
 
-        <div style={{ display: "flex", justifyContent: "center", gap: 28, marginBottom: 36 }}>
-          {[{ n: "14", l: "Jurisdictions" }, { n: "24mo", l: "Max notice" }, { n: "Free", l: "Always" }].map(s => <div key={s.l} style={{ textAlign: "center" }}><p style={{ fontSize: 20, fontWeight: 500, margin: "0 0 1px" }}>{s.n}</p><p style={{ fontSize: 10, color: "rgba(255,255,255,.45)", margin: 0, textTransform: "uppercase", letterSpacing: ".06em" }}>{s.l}</p></div>)}
-        </div>
+    {/* Content */}
+    <div style={{ position: "relative", zIndex: 1, textAlign: "center", maxWidth: 460, width: "100%" }}>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginBottom: 32, textAlign: "left" }}>
-          {[{ i: "\u2696", t: "Legal minimums + court estimates", d: "Both calculations explained" }, { i: "\u2709", t: "Negotiation letter", d: "Ready-to-send draft" }, { i: "\u2611", t: "Action plan", d: "Step-by-step checklist" }, { i: "\uD83D\uDCCB", t: "Lawyer report", d: "Send to your attorney" }].map(f => <div key={f.t} style={{ background: "rgba(255,255,255,.07)", borderRadius: 9, padding: "11px 13px" }}><span style={{ fontSize: 14 }}>{f.i}</span><p style={{ fontSize: 11.5, fontWeight: 500, margin: "3px 0 1px" }}>{f.t}</p><p style={{ fontSize: 10, color: "rgba(255,255,255,.45)", margin: 0 }}>{f.d}</p></div>)}
-        </div>
+      {/* Logo */}
+      <div style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(-12px)", transition: "all .6s cubic-bezier(.25,1,.5,1)", display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 36, padding: "8px 18px 8px 12px", borderRadius: 50, background: "rgba(255,255,255,.07)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,.1)" }}>
+        <Logo size={26} color="#fff" />
+        <span style={{ fontSize: 15, fontWeight: 500, letterSpacing: ".04em" }}>Parachute</span>
       </div>
-    </Fade>
 
-    <Fade delay={250}>
-      <div style={{ maxWidth: 420, width: "100%" }}>
-        {!showTerms ? <button onClick={() => setShowTerms(true)} style={{ width: "100%", padding: "15px", borderRadius: 13, border: "none", background: "#fff", color: T, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>{"Start your analysis \u2192"}</button>
-        : <div style={{ background: "rgba(0,0,0,.2)", borderRadius: 13, padding: "18px" }}>
-          <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 8px" }}>Before we begin</p>
-          <div style={{ background: "rgba(255,255,255,.05)", borderRadius: 8, padding: "11px 13px", marginBottom: 12, maxHeight: 160, overflowY: "auto" }}>
-            <p style={{ fontSize: 10.5, color: "rgba(255,255,255,.65)", margin: 0, lineHeight: 1.55 }}>
-              This tool provides general information about severance entitlements under Canadian law for educational purposes only. It does not constitute legal advice, and using it does not create a solicitor-client relationship.{"\n\n"}Estimates are based on publicly available legal standards and general case law principles. They may not reflect all factors specific to your situation.{"\n\n"}The negotiation letter and lawyer report are templates only. Do not act on them without review by a qualified employment lawyer.{"\n\n"}By proceeding, you confirm you understand and accept these terms.
-            </p>
+      {/* Headline */}
+      <h1 style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(16px)", transition: "all .8s cubic-bezier(.25,1,.5,1) .1s", fontFamily: DF, fontSize: "clamp(34px, 9vw, 52px)", fontWeight: 400, margin: "0 0 18px", lineHeight: 1.06, letterSpacing: "-0.005em" }}>
+        Know what<br />you're owed.
+      </h1>
+
+      {/* Sub */}
+      <p style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(12px)", transition: "all .7s cubic-bezier(.25,1,.5,1) .2s", fontSize: 15.5, color: "rgba(255,255,255,.7)", lineHeight: 1.65, maxWidth: 350, margin: "0 auto 40px", fontWeight: 400 }}>
+        Free severance analysis built on Canadian employment law. In 2 minutes, not 2 billable hours.
+      </p>
+
+      {/* Stats */}
+      <div style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(12px)", transition: "all .6s cubic-bezier(.25,1,.5,1) .3s", display: "flex", justifyContent: "center", gap: 0, marginBottom: 40 }}>
+        {[{ n: "14", l: "Jurisdictions" }, { n: "2 min", l: "To complete" }, { n: "Free", l: "Always" }].map((s, i) => <div key={s.l} style={{ textAlign: "center", padding: "0 26px", borderRight: i < 2 ? "1px solid rgba(255,255,255,.15)" : "none" }}>
+          <p style={{ fontSize: 24, fontWeight: 400, margin: "0 0 3px", fontFamily: DF }}>{s.n}</p>
+          <p style={{ fontSize: 10, color: "rgba(255,255,255,.5)", margin: 0, textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 500 }}>{s.l}</p>
+        </div>)}
+      </div>
+
+      {/* Feature cards */}
+      <div style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(16px)", transition: "all .7s cubic-bezier(.25,1,.5,1) .4s", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 36, textAlign: "left" }}>
+        {features.map(f => <div
+          key={f.k}
+          onMouseEnter={() => setHov(f.k)}
+          onMouseLeave={() => setHov(null)}
+          style={{
+            background: hov === f.k ? "rgba(255,255,255,.13)" : "rgba(255,255,255,.06)",
+            borderRadius: 14,
+            padding: "15px 16px",
+            minHeight: 120,
+            border: "1px solid " + (hov === f.k ? "rgba(255,255,255,.2)" : "rgba(255,255,255,.08)"),
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            transform: hov === f.k ? "translateY(-2px)" : "translateY(0)",
+            boxShadow: hov === f.k ? "0 10px 30px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.12)" : "0 2px 8px rgba(0,0,0,.06)",
+            transition: "all .2s cubic-bezier(.25,1,.5,1)",
+            cursor: "default",
+          }}>
+          <div style={{ color: hov === f.k ? "#fff" : "rgba(255,255,255,.55)", marginBottom: 8, transition: "color .2s" }}>{f.icon}</div>
+          <p style={{ fontSize: 12.5, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3 }}>{f.t}</p>
+          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,.5)", margin: 0, lineHeight: 1.4 }}>{f.d}</p>
+        </div>)}
+      </div>
+
+      {/* CTA */}
+      <div style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(12px)", transition: "all .7s cubic-bezier(.25,1,.5,1) .55s" }}>
+        {!showTerms ? <button
+          onMouseEnter={() => setHov("cta")}
+          onMouseLeave={() => setHov(null)}
+          onClick={() => setShowTerms(true)}
+          style={{
+            width: "100%",
+            padding: "16px",
+            borderRadius: 14,
+            border: "none",
+            background: hov === "cta" ? "#fff" : "rgba(255,255,255,.95)",
+            color: "#064E3E",
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: "pointer",
+            transform: hov === "cta" ? "translateY(-1px)" : "translateY(0)",
+            boxShadow: hov === "cta" ? "0 14px 36px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.15)" : "0 4px 16px rgba(0,0,0,.12)",
+            transition: "all .2s cubic-bezier(.25,1,.5,1)",
+            letterSpacing: ".01em",
+          }}>Start your free analysis →</button>
+        : <div style={{ background: "rgba(0,0,0,.3)", borderRadius: 16, padding: "20px", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,.1)" }}>
+          <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px" }}>Terms of Use & Disclaimer</p>
+          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,.5)", margin: "0 0 10px" }}>Please read carefully before proceeding.</p>
+          <div style={{ background: "rgba(255,255,255,.06)", borderRadius: 10, padding: "14px 15px", marginBottom: 14, maxHeight: 200, overflowY: "auto", border: "1px solid rgba(255,255,255,.06)" }}>
+            <p style={{ fontSize: 10.5, color: "rgba(255,255,255,.7)", margin: 0, lineHeight: 1.65, whiteSpace: "pre-line" }}>{"1. NOT LEGAL ADVICE\nThis tool provides general information about severance and termination entitlements under Canadian federal, provincial, and territorial employment standards legislation and common law principles. It is provided strictly for educational and informational purposes. Nothing generated by this tool constitutes legal advice, a legal opinion, or a recommendation to pursue or refrain from pursuing any particular course of action. No solicitor-client, attorney-client, or other professional relationship is created by your use of this tool.\n\n2. NO WARRANTY; ACCURACY NOT GUARANTEED\nAll estimates, calculations, ranges, and outputs are provided on an \"as is\" and \"as available\" basis, without warranty of any kind, whether express, implied, statutory, or otherwise, including without limitation any warranty of merchantability, fitness for a particular purpose, accuracy, completeness, or non-infringement. The information presented may be inaccurate, incomplete, outdated, or inapplicable to your specific circumstances. Employment legislation, regulations, and case law are subject to change at any time, and this tool may not reflect the most current legal developments in any jurisdiction.\n\n3. LIMITATION OF LIABILITY\nTo the maximum extent permitted by applicable law, the creators, developers, operators, and affiliates of this tool shall not be liable for any direct, indirect, incidental, special, consequential, punitive, or exemplary damages of any kind, including without limitation damages for loss of income, loss of employment benefits, litigation costs, emotional distress, or any other losses arising out of or in connection with your use of or reliance on this tool or any information, content, materials, or outputs made available through it, whether based on contract, tort, negligence, strict liability, or any other legal theory, even if advised of the possibility of such damages.\n\n4. NO RELIANCE\nYou acknowledge and agree that you will not rely on this tool as a substitute for qualified legal counsel. The outputs, including but not limited to severance estimates, negotiation letters, lawyer reports, checklists, benefits guidance, and tax considerations, are templates and general references only. You are solely responsible for verifying all information independently and for retaining a qualified employment lawyer licensed in your jurisdiction before making any decisions regarding your employment, severance, or legal rights.\n\n5. TEMPLATE DOCUMENTS\nAny negotiation letters, demand letters, lawyer reports, or other documents generated by this tool are generic templates that have not been reviewed by a lawyer in connection with your individual circumstances. Sending, relying on, or acting upon these documents without independent legal review is done entirely at your own risk. The use of legal terminology, case law references, or statutory citations within these templates does not render them legal advice.\n\n6. JURISDICTIONAL LIMITATIONS\nCanadian employment law varies significantly across federal, provincial, and territorial jurisdictions. This tool attempts to address multiple jurisdictions but may not accurately capture all applicable legislation, regulations, collective agreement provisions, or case law developments in every jurisdiction. Users in Quebec should note that civil law principles apply, and common law reasonable notice analysis may not apply in the same manner.\n\n7. DATA & PRIVACY\nAll data you enter into this tool is processed entirely within your web browser. No personal information, employment data, or inputs of any kind are transmitted to, collected by, stored on, or accessible by any server, database, third party, or the operators of this tool. Nothing is logged, tracked, or retained.\n\n8. INDEMNIFICATION\nBy using this tool, you agree to indemnify, defend, and hold harmless the creators, developers, operators, and affiliates of this tool from and against any and all claims, liabilities, damages, losses, costs, and expenses (including reasonable legal fees) arising out of or in any way connected with your use of or reliance on this tool.\n\n9. GOVERNING LAW\nThese terms shall be governed by and construed in accordance with the laws of the Province of Ontario and the federal laws of Canada applicable therein, without regard to conflict of law principles.\n\n10. ACCEPTANCE\nBy checking the box below and proceeding, you confirm that you have read, understood, and agree to be bound by all of the foregoing terms and conditions."}</p>
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer", marginBottom: 12 }}>
-            <div onClick={() => setAgreed(!agreed)} style={{ width: 20, height: 20, borderRadius: 5, border: agreed ? "none" : "2px solid rgba(255,255,255,.3)", background: agreed ? "#fff" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{agreed && <span style={{ color: T, fontSize: 13, fontWeight: 700 }}>{"\u2713"}</span>}</div>
-            <span style={{ fontSize: 12.5, color: "rgba(255,255,255,.8)" }}>I understand this is not legal advice</span>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", marginBottom: 14 }}>
+            <div onClick={() => setAgreed(!agreed)} style={{ width: 22, height: 22, borderRadius: 6, border: agreed ? "none" : "2px solid rgba(255,255,255,.3)", background: agreed ? "#fff" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", transition: "all .15s", boxShadow: agreed ? "0 2px 8px rgba(0,0,0,.15)" : "none" }}>{agreed && <span style={{ color: T, fontSize: 13, fontWeight: 700 }}>{"\u2713"}</span>}</div>
+            <span style={{ fontSize: 12.5, color: "rgba(255,255,255,.8)" }}>I have read and agree to these terms</span>
           </label>
-          <button onClick={agreed ? onStart : undefined} style={{ width: "100%", padding: "13px", borderRadius: 9, border: "none", background: agreed ? "#fff" : "rgba(255,255,255,.2)", color: agreed ? T : "rgba(255,255,255,.4)", fontSize: 14, fontWeight: 600, cursor: agreed ? "pointer" : "not-allowed" }}>{"I understand \u2014 let\u2019s go \u2192"}</button>
+          <button
+            onMouseEnter={() => agreed && setHov("go")}
+            onMouseLeave={() => setHov(null)}
+            onClick={agreed ? onStart : undefined}
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: 10,
+              border: "none",
+              background: agreed ? (hov === "go" ? "#fff" : "rgba(255,255,255,.95)") : "rgba(255,255,255,.12)",
+              color: agreed ? "#064E3E" : "rgba(255,255,255,.3)",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: agreed ? "pointer" : "not-allowed",
+              transform: hov === "go" ? "translateY(-1px)" : "translateY(0)",
+              boxShadow: hov === "go" ? "0 8px 24px rgba(0,0,0,.25)" : "none",
+              transition: "all .2s cubic-bezier(.25,1,.5,1)",
+            }}>{"I understand \u2014 let\u2019s go \u2192"}</button>
         </div>}
-        <p style={{ fontSize: 9.5, color: "rgba(255,255,255,.25)", textAlign: "center", marginTop: 14, lineHeight: 1.4 }}>Your data stays in your browser. Nothing is stored.</p>
+        <p style={{ fontSize: 11, color: "rgba(255,255,255,.45)", textAlign: "center", marginTop: 18, lineHeight: 1.4 }}>Your data stays in your browser. Nothing is stored or sent anywhere.</p>
       </div>
-    </Fade>
+    </div>
   </div>;
 }
 
@@ -208,7 +314,7 @@ function S2({ d, setD }) {
       <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Employment details</h2>
       <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>We use these to estimate what you're owed.</p></Fade>
     <Fade delay={25}><Fld label="Age" type="number" value={d.age} onChange={v => setD({ ...d, age: v })} placeholder="e.g. 42" /></Fade>
-    <Fade delay={40}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>How long you worked there</label><div style={{ display: "flex", gap: 7, marginBottom: 10 }}><div style={{ flex: 1 }}><Fld value={d.years} onChange={v => setD({ ...d, years: v })} type="number" placeholder="Years" suffix="yrs" /></div><div style={{ flex: 1 }}><Fld value={d.months} onChange={v => setD({ ...d, months: v })} type="number" placeholder="Months" suffix="mo" /></div></div></Fade>
+    <Fade delay={40}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>How long you worked there</label><div style={{ display: "flex", gap: 7, marginBottom: 10 }}><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.years} onChange={v => setD({ ...d, years: v })} type="number" placeholder="Years" suffix="yrs" /></div><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.months} onChange={v => setD({ ...d, months: v })} type="number" placeholder="Months" suffix="mo" /></div></div></Fade>
     <Fade delay={55}><Fld label="Job title" value={d.jobTitle} onChange={v => setD({ ...d, jobTitle: v })} placeholder="e.g. Senior Marketing Manager" /></Fade>
     <Fade delay={70}><Fld label="Annual base salary" type="number" value={d.salary} onChange={v => setD({ ...d, salary: v })} prefix="$" placeholder="e.g. 95000" suffix="CAD" /></Fade>
     <Fade delay={85}><Fld label="Annual bonus / commission" type="number" value={d.bonus} onChange={v => setD({ ...d, bonus: v })} prefix="$" placeholder="0" suffix="CAD" help="Average annual variable pay. Enter 0 if none." /></Fade>
@@ -603,7 +709,7 @@ function Res({ res, onReset }) {
   return <div style={{ maxWidth: 520, margin: "0 auto", padding: "0 20px" }}>
     {/* Header */}
     <div style={{ background: T, margin: "-10px -20px 0", padding: "14px 20px 16px", borderRadius: "0 0 16px 16px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}><span style={{ fontSize: 16, color: "#fff" }}>{"\u2602"}</span><span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}><Logo size={18} color="#fff" /><span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span></div>
       <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px", color: "#fff" }}>Your analysis</h2>
       <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", margin: 0 }}>{res.pn} {"\u2014"} {res.jt || res.rl}, age {res.age}, {res.yrs}y</p>
     </div>
@@ -789,7 +895,7 @@ function Res({ res, onReset }) {
     {/* DISCLAIMER */}
     <Fade delay={250}><div style={{ background: "#FFF8E7", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1px solid #F0E6C8" }}>
       <p style={{ fontSize: 10.5, fontWeight: 600, color: "#854F0B", margin: "0 0 3px" }}>{"\u2696"} Important legal disclaimer</p>
-      <p style={{ fontSize: 9.5, color: "#854F0B", margin: 0, lineHeight: 1.5, opacity: .8 }}>This analysis is for informational purposes only. It does not constitute legal advice and does not create a solicitor-client relationship. The negotiation letter and lawyer report are templates. Consult a qualified employment lawyer before making decisions.</p>
+      <p style={{ fontSize: 9.5, color: "#854F0B", margin: 0, lineHeight: 1.55, opacity: .85 }}>This analysis is for informational purposes only. It does not constitute legal advice, a legal opinion, or a recommendation, and does not create a solicitor-client relationship. All estimates, calculations, letters, and reports are provided "as is" without warranty of any kind. Information may be inaccurate, incomplete, or not current. You accepted the full Terms of Use before using this tool. Consult a qualified employment lawyer licensed in your jurisdiction before making any decisions.</p>
     </div></Fade>
 
     <Fade delay={265}><div style={{ display: "flex", gap: 7, marginBottom: 32 }}>
