@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+import html2pdf from "html2pdf.js";
 
 /* ═══════════════════ DATA ═══════════════════ */
 const PROVS = {
@@ -625,26 +624,20 @@ function Res({ res, onReset }) {
   function downloadPdf() {
     if (!pdfRef.current || pdfLoading) return;
     setPdfLoading(true);
-    const el = pdfRef.current;
-    html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false }).then(canvas => {
-      const imgW = 210;
-      const pageH = 297;
-      const imgH = canvas.height * imgW / canvas.width;
-      const pdf = new jsPDF("p", "mm", "a4");
-      let pos = 0;
-      while (pos < imgH) {
-        if (pos > 0) pdf.addPage();
-        pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, -pos, imgW, imgH);
-        pos += pageH;
-      }
-      pdf.save("parachute-severance-analysis.pdf");
-      setPdfLoading(false);
-    }).catch(() => setPdfLoading(false));
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: "parachute-severance-analysis.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 3, useCORS: true, backgroundColor: "#ffffff", logging: false },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"], avoid: [".pdf-section", ".pdf-row", ".pdf-card", ".pdf-strategy"] }
+    };
+    html2pdf().set(opt).from(pdfRef.current).save().then(() => setPdfLoading(false)).catch(() => setPdfLoading(false));
   }
 
   if (printView) {
-    const R = ({ k, v, accent, alert: al }) => <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12.5, borderBottom: "1px solid #F1EFE8" }}><span style={{ color: "#888" }}>{k}</span><span style={{ fontWeight: 500, color: al ? "#993C1D" : accent ? T : "#1A1A18", textAlign: "right", maxWidth: "60%" }}>{v}</span></div>;
-    const Sec = ({ n, title, children }) => <div style={{ marginBottom: 20 }}><p style={{ fontSize: 11, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px", paddingBottom: 4, borderBottom: "2px solid " + Tl }}>{n}. {title}</p>{children}</div>;
+    const R = ({ k, v, accent, alert: al }) => <div className="pdf-row" style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12.5, borderBottom: "1px solid #F1EFE8" }}><span style={{ color: "#888" }}>{k}</span><span style={{ fontWeight: 500, color: al ? "#993C1D" : accent ? T : "#1A1A18", textAlign: "right", maxWidth: "60%" }}>{v}</span></div>;
+    const Sec = ({ n, title, children }) => <div className="pdf-section" style={{ marginBottom: 20 }}><p style={{ fontSize: 11, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px", paddingBottom: 4, borderBottom: "2px solid " + Tl }}>{n}. {title}</p>{children}</div>;
     const verdictColor = !asmnt ? T : asmnt.c;
     const verdictBg = !asmnt ? "rgba(10,107,92,.05)" : asmnt.bg;
     const barMax = Math.max(...bars.map(b => b.a), 1);
@@ -664,7 +657,7 @@ function Res({ res, onReset }) {
         </div>
 
         {/* ── EXECUTIVE SUMMARY ── */}
-        <div style={{ marginBottom: 24, padding: "18px 20px", borderRadius: 10, border: "2px solid " + T, background: "rgba(10,107,92,.02)" }}>
+        <div className="pdf-section" style={{ marginBottom: 24, padding: "18px 20px", borderRadius: 10, border: "2px solid " + T, background: "rgba(10,107,92,.02)" }}>
           <p style={{ fontSize: 11, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 12px" }}>Executive summary</p>
 
           {/* Verdict */}
@@ -675,7 +668,7 @@ function Res({ res, onReset }) {
           {!asmnt && <p style={{ fontSize: 12, color: "#555", margin: "0 0 14px" }}>No offer provided. The full estimated range is shown below.</p>}
 
           {/* Key numbers */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+          <div className="pdf-card" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
             <div style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #E8E6E0" }}>
               <p style={{ fontSize: 9, color: "#888", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>Legal floor</p>
               <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 1px" }}>{$(res.esaAmt)}</p>
@@ -750,7 +743,7 @@ function Res({ res, onReset }) {
 
         <Sec n={res.off !== null ? 6 : 5} title="Recommended strategy">
           {res.sr && <p style={{ fontSize: 12, color: "#993C1D", fontWeight: 600, margin: "0 0 8px" }}>PRIORITY: Assess release enforceability (duress, independent advice, adequacy, ESA floor)</p>}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, margin: "8px 0 12px" }}>
+          <div className="pdf-strategy" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, margin: "8px 0 12px" }}>
             {[["Opening", res.cH, res.cHA], ["Target", res.cM, res.cMA], ["Floor", res.cL, res.cLA]].map(([label, mo, amt]) => (
               <div key={label} style={{ textAlign: "center", padding: "12px 8px", borderRadius: 8, border: label === "Target" ? "2px solid " + T : "1px solid #E8E6E0" }}>
                 <p style={{ fontSize: 10, color: label === "Target" ? T : "#888", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>{label}</p>
