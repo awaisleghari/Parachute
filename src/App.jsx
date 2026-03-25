@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 /* ═══════════════════ DATA ═══════════════════ */
 const PROVS = {
@@ -75,7 +77,7 @@ function Sel({ on, onClick, children, sub }) {
 function Fld({ label, value, onChange, type, prefix, placeholder, help, suffix }) {
   const [f, setF] = useState(false);
   return <div style={{ marginBottom: 14, minWidth: 0 }}>
-    {label && <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</label>}
+    {label && <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</label>}
     <div style={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: 9, border: f ? "2px solid " + T : "1.5px solid #D3D1C7", padding: f ? "0 12px" : "0 13px", boxShadow: f ? "0 0 0 3px rgba(10,107,92,.06)" : "none", transition: "all .12s", minWidth: 0 }}>
       {prefix && <span style={{ color: "#888", fontSize: 14, marginRight: 4 }}>{prefix}</span>}
       <input type={type || "text"} value={value} onChange={e => onChange(e.target.value)} onFocus={() => setF(true)} onBlur={() => setF(false)} placeholder={placeholder} style={{ flex: 1, border: "none", outline: "none", fontSize: 14, padding: "9px 0", background: "transparent", color: "#1A1A18", minWidth: 0, width: "100%" }} />
@@ -290,21 +292,57 @@ function Landing({ onStart }) {
 }
 
 /* ═══════════════════ STEPS ═══════════════════ */
-const TS = 5;
+const TS = 6;
 
 function S1({ d, setD }) {
-  const provKeys = Object.entries(PROVS).filter(([c, p]) => !p.tr && c !== "FED");
-  const terrKeys = Object.entries(PROVS).filter(([, p]) => p.tr);
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const allJurisdictions = Object.entries(PROVS).map(([c, p]) => ({ code: c, name: p.n, group: c === "FED" ? "Federal" : p.tr ? "Territory" : "Province" }));
+  const filtered = search ? allJurisdictions.filter(j => j.name.toLowerCase().includes(search.toLowerCase())) : allJurisdictions;
+  const selected = d.province ? PROVS[d.province]?.n : "";
+  const QL = { fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em", display: "block" };
+
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 1 of " + TS}</p>
       <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Where do you work?</h2>
       <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>Each province and territory has its own employment rules.</p></Fade>
-    <Fade delay={10}><p style={{ fontSize: 9, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 6px" }}>Provinces</p></Fade>
-    {provKeys.map(([c, p], i) => <Fade key={c} delay={20 + i * 10}><Sel on={d.province === c} onClick={() => setD({ ...d, province: c })}>{p.n}</Sel></Fade>)}
-    <Fade delay={20 + provKeys.length * 10}><p style={{ fontSize: 9, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: ".06em", margin: "10px 0 6px" }}>Territories</p></Fade>
-    {terrKeys.map(([c, p], i) => <Fade key={c} delay={30 + provKeys.length * 10 + i * 10}><Sel on={d.province === c} onClick={() => setD({ ...d, province: c })}>{p.n}</Sel></Fade>)}
-    <Fade delay={30 + (provKeys.length + terrKeys.length) * 10}><p style={{ fontSize: 9, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: ".06em", margin: "10px 0 6px" }}>Federal</p></Fade>
-    <Fade delay={40 + (provKeys.length + terrKeys.length) * 10}><Sel on={d.province === "FED"} onClick={() => setD({ ...d, province: "FED" })} sub="Airlines, banks, telecom, railways, and other federally regulated employers">Canada Labour Code</Sel></Fade>
+    <Fade delay={20}>
+      <label style={QL}>Province, territory, or federal</label>
+      <div style={{ position: "relative" }}>
+        <div onClick={() => setOpen(!open)} style={{ display: "flex", alignItems: "center", background: "#fff", borderRadius: 9, border: open ? "2px solid " + T : "1.5px solid #D3D1C7", padding: open ? "0 12px" : "0 13px", cursor: "pointer", boxShadow: open ? "0 0 0 3px rgba(10,107,92,.06)" : "none", transition: "all .12s" }}>
+          <input
+            type="text"
+            value={open ? search : selected}
+            onChange={e => { setSearch(e.target.value); if (!open) setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            placeholder="Start typing or select..."
+            style={{ flex: 1, border: "none", outline: "none", fontSize: 14, padding: "11px 0", background: "transparent", color: "#1A1A18", cursor: "pointer" }}
+          />
+          <span style={{ color: "#888", fontSize: 12, transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform .15s" }}>{"\u25BE"}</span>
+        </div>
+        {open && <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", borderRadius: 10, border: "1.5px solid #D3D1C7", boxShadow: "0 8px 24px rgba(0,0,0,.1)", zIndex: 10, maxHeight: 260, overflowY: "auto" }}>
+          {["Province", "Territory", "Federal"].map(group => {
+            const items = filtered.filter(j => j.group === group);
+            if (items.length === 0) return null;
+            return <div key={group}>
+              <p style={{ fontSize: 9, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: ".06em", padding: "8px 14px 4px", margin: 0 }}>{group}</p>
+              {items.map(j => <div
+                key={j.code}
+                onClick={() => { setD({ ...d, province: j.code }); setOpen(false); setSearch(""); }}
+                style={{ padding: "9px 14px", fontSize: 13, color: d.province === j.code ? T : "#1A1A18", fontWeight: d.province === j.code ? 500 : 400, cursor: "pointer", background: d.province === j.code ? "rgba(10,107,92,.04)" : "transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(10,107,92,.04)"}
+                onMouseLeave={e => e.currentTarget.style.background = d.province === j.code ? "rgba(10,107,92,.04)" : "transparent"}
+              >
+                <span>{j.name}</span>
+                {d.province === j.code && <span style={{ color: T, fontSize: 12 }}>{"\u2713"}</span>}
+              </div>)}
+            </div>;
+          })}
+          {filtered.length === 0 && <p style={{ padding: "12px 14px", fontSize: 12, color: "#999", margin: 0 }}>No match found</p>}
+        </div>}
+      </div>
+      {d.province === "FED" && <p style={{ fontSize: 10.5, color: "#888", marginTop: 6, lineHeight: 1.4, background: "#FAFAF7", borderRadius: 7, padding: "8px 10px" }}>Airlines, banks, telecom, railways, and other federally regulated employers.</p>}
+    </Fade>
   </div>;
 }
 
@@ -314,33 +352,35 @@ function S2({ d, setD }) {
       <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Employment details</h2>
       <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>We use these to estimate what you're owed.</p></Fade>
     <Fade delay={25}><Fld label="Age" type="number" value={d.age} onChange={v => setD({ ...d, age: v })} placeholder="e.g. 42" /></Fade>
-    <Fade delay={40}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>How long you worked there</label><div style={{ display: "flex", gap: 7, marginBottom: 10 }}><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.years} onChange={v => setD({ ...d, years: v })} type="number" placeholder="Years" suffix="yrs" /></div><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.months} onChange={v => setD({ ...d, months: v })} type="number" placeholder="Months" suffix="mo" /></div></div></Fade>
+    <Fade delay={40}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>How long you worked there</label><div style={{ display: "flex", gap: 7, marginBottom: 10 }}><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.years} onChange={v => setD({ ...d, years: v })} type="number" placeholder="Years" suffix="yrs" /></div><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.months} onChange={v => setD({ ...d, months: v })} type="number" placeholder="Months" suffix="mo" /></div></div></Fade>
     <Fade delay={55}><Fld label="Job title" value={d.jobTitle} onChange={v => setD({ ...d, jobTitle: v })} placeholder="e.g. Senior Marketing Manager" /></Fade>
     <Fade delay={70}><Fld label="Annual base salary" type="number" value={d.salary} onChange={v => setD({ ...d, salary: v })} prefix="$" placeholder="e.g. 95000" suffix="CAD" /></Fade>
     <Fade delay={85}><Fld label="Annual bonus / commission" type="number" value={d.bonus} onChange={v => setD({ ...d, bonus: v })} prefix="$" placeholder="0" suffix="CAD" help="Average annual variable pay. Enter 0 if none." /></Fade>
     <Fade delay={95}><Fld label="Unused vacation days" type="number" value={d.vacDays} onChange={v => setD({ ...d, vacDays: v })} placeholder="e.g. 10" suffix="days" help="Your employer must pay these out. This is separate from severance." /></Fade>
-    <Fade delay={110}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>Your level of responsibility</label><p style={{ fontSize: 10.5, color: "#999", marginTop: 0, marginBottom: 6, lineHeight: 1.35 }}>Based on authority, not salary. Courts care about how hard you are to replace.</p>{ROLES.map(r => <Sel key={r.id} on={d.role === r.id} onClick={() => setD({ ...d, role: r.id })} sub={r.d}>{r.l}</Sel>)}</Fade>
-    <Fade delay={125}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Industry</label><div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>{INDS.map(i => <Pill key={i} on={d.industry === i} onClick={() => setD({ ...d, industry: i })}>{i}</Pill>)}</div></Fade>
-    {d.province === "ON" && <Fade delay={140}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>Ontario: extra severance pay eligibility</label><Sel on={d.sevElig === true} onClick={() => setD({ ...d, sevElig: true })}>Employer payroll $2.5M+ or 50+ severed</Sel><Sel on={d.sevElig === false} onClick={() => setD({ ...d, sevElig: false })}>Not eligible / unsure</Sel></Fade>}
+    <Fade delay={110}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>Your level of responsibility</label><p style={{ fontSize: 11, color: "#888", marginTop: 0, marginBottom: 7, lineHeight: 1.4 }}>Based on authority, not salary. Courts care about how hard you are to replace.</p>{ROLES.map(r => <Sel key={r.id} on={d.role === r.id} onClick={() => setD({ ...d, role: r.id })} sub={r.d}>{r.l}</Sel>)}</Fade>
+    <Fade delay={125}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Industry</label><div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>{INDS.map(i => <Pill key={i} on={d.industry === i} onClick={() => setD({ ...d, industry: i })}>{i}</Pill>)}</div></Fade>
+    {d.province === "ON" && <Fade delay={140}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>Ontario: extra severance pay</label><p style={{ fontSize: 11, color: "#888", marginTop: 0, marginBottom: 7, lineHeight: 1.4 }}>Ontario is unique. On top of termination pay, you may be owed a separate "severance pay" if your employer's total annual payroll exceeds $2.5 million, or if 50+ employees were let go within 6 months. If you're not sure, select "Not sure" and a lawyer can confirm.</p><Sel on={d.sevElig === true} onClick={() => setD({ ...d, sevElig: true })}>Yes, or I think so</Sel><Sel on={d.sevElig === false} onClick={() => setD({ ...d, sevElig: false })}>No / not sure</Sel></Fade>}
   </div>;
 }
 
 function S3({ d, setD }) {
+  const QL = { display: "block", fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" };
+  const QH = { fontSize: 11, color: "#888", marginTop: 0, marginBottom: 7, lineHeight: 1.4 };
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 3 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your circumstances</h2>
-      <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>These affect how much you may be owed.</p></Fade>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your termination</h2>
+      <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>These details affect how much you may be owed.</p></Fade>
 
-    <Fade delay={25}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>Why were you let go?</label>{REASONS.map(r => <Sel key={r.id} on={d.reason === r.id} onClick={() => setD({ ...d, reason: r.id })} sub={r.i}>{r.l}</Sel>)}</Fade>
-    {((parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12) < 3 && <Fade delay={50}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Did they recruit you away from a previous job?</label><p style={{ fontSize: 10.5, color: "#999", marginTop: 0, marginBottom: 5, lineHeight: 1.35 }}>Since you were there under 3 years, this matters. If they convinced you to leave a stable position and then let you go quickly, courts often award significantly more than your short tenure alone would suggest.</p><Sel on={d.induced === true} onClick={() => setD({ ...d, induced: true })}>Yes, I was recruited away</Sel><Sel on={d.induced === false} onClick={() => setD({ ...d, induced: false })}>No</Sel></Fade>}
+    <Fade delay={25}><label style={QL}>Why were you let go?</label>{REASONS.map(r => <Sel key={r.id} on={d.reason === r.id} onClick={() => setD({ ...d, reason: r.id })} sub={r.i}>{r.l}</Sel>)}</Fade>
+    {((parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12) < 3 && <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>Did they recruit you away from a previous job?</label><p style={QH}>Since you were there under 3 years, this matters. If they convinced you to leave a stable position and then let you go quickly, courts often award significantly more than your short tenure alone would suggest.</p><Sel on={d.induced === true} onClick={() => setD({ ...d, induced: true })}>Yes, I was recruited away</Sel><Sel on={d.induced === false} onClick={() => setD({ ...d, induced: false })}>No</Sel></Fade>}
 
-    <Fade delay={75}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Your employment contract</label><p style={{ fontSize: 10.5, color: "#999", marginTop: 0, marginBottom: 5, lineHeight: 1.35 }}>Many contracts try to limit what you get. Courts throw them out more often than you'd expect.</p>
+    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>Your employment contract</label><p style={QH}>Many contracts try to limit what you get. Courts throw them out more often than you'd expect.</p>
       <Sel on={d.hasContract === true} onClick={() => setD({ ...d, hasContract: true, contractTerms: false, contractAge: "" })}>I signed a written contract or offer letter</Sel>
       {d.hasContract === true && <div style={{ marginLeft: 24, borderLeft: "2px solid " + Tl, paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>
-        <p style={{ fontSize: 10.5, color: "#999", margin: "0 0 5px", lineHeight: 1.35 }}>Look for sections titled "Termination", "Notice", or "Severance" in your contract.</p>
+        <p style={{ fontSize: 11, color: "#888", margin: "0 0 5px", lineHeight: 1.4 }}>Look for sections titled "Termination", "Notice", or "Severance" in your contract.</p>
         <Sel on={d.contractTerms === true} onClick={() => setD({ ...d, contractTerms: true })}>Yes, it mentions termination</Sel>
         {d.contractTerms === true && <div style={{ marginLeft: 20, borderLeft: "2px solid #E8E6E0", paddingLeft: 10, marginTop: 3, marginBottom: 6 }}>
-          <p style={{ fontSize: 10.5, color: "#999", margin: "0 0 5px", lineHeight: 1.35 }}>When did you sign this contract?</p>
+          <p style={{ fontSize: 11, color: "#888", margin: "0 0 5px", lineHeight: 1.4 }}>When did you sign this contract?</p>
           <Sel on={d.contractAge === "recent"} onClick={() => setD({ ...d, contractAge: "recent" })}>In the last 3 years</Sel>
           <Sel on={d.contractAge === "old"} onClick={() => setD({ ...d, contractAge: "old" })}>More than 3 years ago</Sel>
           <Sel on={d.contractAge === "unsure"} onClick={() => setD({ ...d, contractAge: "unsure" })}>Not sure</Sel>
@@ -350,25 +390,39 @@ function S3({ d, setD }) {
       <Sel on={d.hasContract === false} onClick={() => setD({ ...d, hasContract: false, contractTerms: false, contractAge: "" })}>No written contract / not sure</Sel>
     </Fade>
 
-    <Fade delay={100}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Was the termination handled badly?</label><p style={{ fontSize: 10.5, color: "#999", marginTop: 0, marginBottom: 5, lineHeight: 1.35 }}>Escorted out, humiliated, lied to, or announced to others before you were told. Courts can award extra damages.</p><Sel on={d.badFaith === true} onClick={() => setD({ ...d, badFaith: true })}>Yes</Sel><Sel on={d.badFaith === false} onClick={() => setD({ ...d, badFaith: false })}>No / reasonably handled</Sel></Fade>
-    <Fade delay={120}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Have you signed a release?</label><p style={{ fontSize: 10.5, color: "#999", marginTop: 0, marginBottom: 5, lineHeight: 1.35 }}>A release is where you give up your right to sue in exchange for the severance. This is critical.</p><Sel on={d.signedRelease === true} onClick={() => setD({ ...d, signedRelease: true })} sub="May limit options, but can sometimes be undone">Already signed</Sel><Sel on={d.signedRelease === false} onClick={() => setD({ ...d, signedRelease: false })}>Not yet</Sel></Fade>
-    <Fade delay={140}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Have you found new work?</label><Sel on={d.newJob === "yes"} onClick={() => setD({ ...d, newJob: "yes" })} sub="Reduces notice, but you're still owed the difference">Yes</Sel><Sel on={d.newJob === "looking"} onClick={() => setD({ ...d, newJob: "looking" })}>Actively looking</Sel><Sel on={d.newJob === "no"} onClick={() => setD({ ...d, newJob: "no" })}>Not yet</Sel></Fade>
-    <Fade delay={155}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Non-compete or non-solicit clause?</label><Sel on={d.nonCompete === true} onClick={() => setD({ ...d, nonCompete: true })} sub="Many are unenforceable in Canada">Yes</Sel><Sel on={d.nonCompete === false} onClick={() => setD({ ...d, nonCompete: false })}>No / not sure</Sel></Fade>
-    <Fade delay={170}><label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Benefits while employed</label><p style={{ fontSize: 10.5, color: "#999", marginTop: 0, marginBottom: 5, lineHeight: 1.35 }}>Select all that apply. We'll explain what happens to each one.</p><div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>{BENS.map(b => { const on = (d.bens || []).includes(b.id); return <Pill key={b.id} on={on} onClick={() => { const c = d.bens || []; setD({ ...d, bens: on ? c.filter(x => x !== b.id) : [...c, b.id] }); }}>{b.l}</Pill>; })}</div></Fade>
+    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>Was the termination handled badly?</label><p style={QH}>Escorted out, humiliated, lied to, or announced to others before you were told. Courts can award extra damages.</p><Sel on={d.badFaith === true} onClick={() => setD({ ...d, badFaith: true })}>Yes</Sel><Sel on={d.badFaith === false} onClick={() => setD({ ...d, badFaith: false })}>No / reasonably handled</Sel></Fade>
   </div>;
 }
 
 function S4({ d, setD }) {
+  const QL = { display: "block", fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" };
+  const QH = { fontSize: 11, color: "#888", marginTop: 0, marginBottom: 7, lineHeight: 1.4 };
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 4 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your offer</h2>
-      <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>If you have one, we'll compare it and draft a response.</p></Fade>
-    <Fade delay={30}><Sel on={d.hasOffer === true} onClick={() => setD({ ...d, hasOffer: true })}>Yes, I have an offer</Sel><Sel on={d.hasOffer === false} onClick={() => setD({ ...d, hasOffer: false })}>No offer yet</Sel></Fade>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your situation</h2>
+      <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>A few more details that affect your position.</p></Fade>
+
+    <Fade delay={25}><label style={QL}>Have you signed a release?</label><p style={QH}>A release is where you give up your right to sue in exchange for the severance. This is critical.</p><Sel on={d.signedRelease === true} onClick={() => setD({ ...d, signedRelease: true })} sub="May limit options, but can sometimes be undone">Already signed</Sel><Sel on={d.signedRelease === false} onClick={() => setD({ ...d, signedRelease: false })}>Not yet</Sel></Fade>
+
+    <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>Have you found new work?</label><Sel on={d.newJob === "yes"} onClick={() => setD({ ...d, newJob: "yes" })} sub="Reduces notice, but you're still owed the difference">Yes</Sel><Sel on={d.newJob === "looking"} onClick={() => setD({ ...d, newJob: "looking" })}>Actively looking</Sel><Sel on={d.newJob === "no"} onClick={() => setD({ ...d, newJob: "no" })}>Not yet</Sel></Fade>
+
+    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>Non-compete or non-solicit clause?</label><Sel on={d.nonCompete === true} onClick={() => setD({ ...d, nonCompete: true })} sub="Many are unenforceable in Canada">Yes</Sel><Sel on={d.nonCompete === false} onClick={() => setD({ ...d, nonCompete: false })}>No / not sure</Sel></Fade>
+
+    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>Benefits while employed</label><p style={QH}>Select all that apply. We'll explain what happens to each one.</p><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{BENS.map(b => { const on = (d.bens || []).includes(b.id); return <Pill key={b.id} on={on} onClick={() => { const c = d.bens || []; setD({ ...d, bens: on ? c.filter(x => x !== b.id) : [...c, b.id] }); }}>{b.l}</Pill>; })}</div></Fade>
+  </div>;
+}
+
+function S5({ d, setD }) {
+  return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
+    <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 5 of " + TS}</p>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your severance offer</h2>
+      <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>If you've received a severance package, we'll compare it and draft a response.</p></Fade>
+    <Fade delay={30}><Sel on={d.hasOffer === true} onClick={() => setD({ ...d, hasOffer: true })}>Yes, I've received a severance offer</Sel><Sel on={d.hasOffer === false} onClick={() => setD({ ...d, hasOffer: false })}>No offer yet</Sel></Fade>
     {d.hasOffer === true && <Fade delay={60}><div style={{ marginTop: 6 }}><Tog opts={[{ v: "amt", l: "$ Amount" }, { v: "wks", l: "Weeks" }, { v: "mos", l: "Months" }]} val={d.offFmt} onChange={v => setD({ ...d, offFmt: v })} />
       {d.offFmt === "amt" && <Fld type="number" value={d.offAmt} onChange={v => setD({ ...d, offAmt: v })} prefix="$" placeholder="e.g. 45000" />}
       {d.offFmt === "wks" && <Fld type="number" value={d.offWks} onChange={v => setD({ ...d, offWks: v })} placeholder="e.g. 12" suffix="weeks" />}
       {d.offFmt === "mos" && <Fld type="number" value={d.offMos} onChange={v => setD({ ...d, offMos: v })} placeholder="e.g. 3" suffix="months" />}
-      <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#5F5E5A", marginBottom: 4, textTransform: "uppercase", letterSpacing: ".05em" }}>Deadline to accept?</label>
+      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>Deadline to accept?</label>
       <Sel on={d.deadline === true} onClick={() => setD({ ...d, deadline: true })}>Yes</Sel><Sel on={d.deadline === false} onClick={() => setD({ ...d, deadline: false, deadlineDays: "" })}>No</Sel>
       {d.deadline === true && <Fld label="Days remaining" type="number" value={d.deadlineDays} onChange={v => setD({ ...d, deadlineDays: v })} placeholder="e.g. 7" suffix="days" help="Under 7 days is a red flag." />}
     </div></Fade>}
@@ -537,58 +591,6 @@ function buildLawyerReport(r) {
   return rpt;
 }
 
-/* ═══════════════════ WHAT-IF SLIDER ═══════════════════ */
-function WhatIf({ res }) {
-  const maxMo = Math.max(Math.ceil(res.cH) + 2, 6);
-  const [val, setVal] = useState(res.cM);
-  const amt = Math.round(val * res.mo);
-  const pct = v => Math.min((v / maxMo) * 100, 100);
-  const esaMo = res.totW / 4.33;
-  const markers = [
-    { v: esaMo, l: "Floor", c: "#D3D1C7" },
-    { v: res.cL, l: "Low", c: Tl },
-    { v: res.cM, l: "Mid", c: T },
-    { v: res.cH, l: "High", c: Td },
-  ];
-  if (res.off !== null && res.offMo !== null) markers.push({ v: res.offMo, l: "Offer", c: res.off < res.cLA ? "#D85A30" : res.off < res.cMA ? "#BA7517" : T });
-  return <div style={CD}>
-    <p style={SL}>What-if explorer</p>
-    <p style={{ fontSize: 11, color: "#666", margin: "0 0 12px", lineHeight: 1.4 }}>Drag the slider to explore different notice periods and see the dollar impact.</p>
-    <div style={{ textAlign: "center", marginBottom: 10 }}>
-      <span style={{ fontSize: 28, fontFamily: "Georgia,serif", fontWeight: 400, color: T }}>{$(amt)}</span>
-      <span style={{ fontSize: 12, color: "#888", marginLeft: 6 }}>{Math.round(val * 10) / 10} months</span>
-    </div>
-    <div style={{ position: "relative", padding: "0 2px", marginBottom: 28 }}>
-      {/* Track background */}
-      <div style={{ position: "absolute", top: 14, left: 0, right: 0, height: 6, borderRadius: 3, background: "#F1EFE8" }} />
-      {/* Filled track */}
-      <div style={{ position: "absolute", top: 14, left: 0, width: pct(val) + "%", height: 6, borderRadius: 3, background: "linear-gradient(90deg, " + Tl + ", " + T + ")", transition: "width .05s" }} />
-      {/* Markers */}
-      {markers.map((m, i) => <div key={i} style={{ position: "absolute", left: pct(m.v) + "%", top: 6, transform: "translateX(-50%)", zIndex: 1, pointerEvents: "none" }}>
-        <div style={{ width: 2, height: 22, background: m.c, borderRadius: 1, margin: "0 auto" }} />
-        <p style={{ fontSize: 8, color: m.c, margin: "2px 0 0", textAlign: "center", fontWeight: 600, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: ".03em" }}>{m.l}</p>
-      </div>)}
-      {/* Range input */}
-      <input type="range" min={0} max={maxMo} step={0.1} value={val} onChange={e => setVal(parseFloat(e.target.value))}
-        style={{ width: "100%", position: "relative", zIndex: 2, appearance: "none", WebkitAppearance: "none", background: "transparent", height: 34, cursor: "pointer", margin: 0 }} />
-      <style>{`
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 11px; background: ${T}; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); cursor: grab; margin-top: -8px; }
-        input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 11px; background: ${T}; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); cursor: grab; }
-        input[type=range]::-webkit-slider-runnable-track { height: 6px; background: transparent; border-radius: 3px; }
-        input[type=range]::-moz-range-track { height: 6px; background: transparent; border-radius: 3px; }
-      `}</style>
-    </div>
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#B4B2A9" }}>
-      <span>0 mo</span><span>{maxMo} mo</span>
-    </div>
-    {val < esaMo && val > 0 && <p style={{ fontSize: 10.5, color: "#993C1D", margin: "8px 0 0", lineHeight: 1.4, fontWeight: 500 }}>Below the legal minimum. Your employer cannot offer less than {$(res.esaAmt)}.</p>}
-    {val >= esaMo && val < res.cL && <p style={{ fontSize: 10.5, color: "#854F0B", margin: "8px 0 0", lineHeight: 1.4 }}>Above the statutory floor but below the typical court range. Room to negotiate.</p>}
-    {val >= res.cL && val < res.cM && <p style={{ fontSize: 10.5, color: "#854F0B", margin: "8px 0 0", lineHeight: 1.4 }}>In the lower range of what courts award. Midpoint is {res.cM} months ({$(res.cMA)}).</p>}
-    {val >= res.cM && val < res.cH && <p style={{ fontSize: 10.5, color: T, margin: "8px 0 0", lineHeight: 1.4 }}>At or above the midpoint. Strong territory.</p>}
-    {val >= res.cH && <p style={{ fontSize: 10.5, color: T, margin: "8px 0 0", lineHeight: 1.4 }}>At or above the high end of the estimated range.</p>}
-  </div>;
-}
-
 /* ═══════════════════ RESULTS ═══════════════════ */
 function Res({ res, onReset }) {
   const [eml, setEml] = useState(false);
@@ -617,91 +619,159 @@ function Res({ res, onReset }) {
   function copy(t, l) { try { navigator.clipboard.writeText(t); setCp(l); setTimeout(() => setCp(null), 2000); } catch (e) {} }
   const selBens = (res.bens || []).map(id => BENS.find(b => b.id === id)).filter(Boolean);
 
+  const pdfRef = useRef(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  function downloadPdf() {
+    if (!pdfRef.current || pdfLoading) return;
+    setPdfLoading(true);
+    const el = pdfRef.current;
+    html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false }).then(canvas => {
+      const imgW = 210;
+      const pageH = 297;
+      const imgH = canvas.height * imgW / canvas.width;
+      const pdf = new jsPDF("p", "mm", "a4");
+      let pos = 0;
+      while (pos < imgH) {
+        if (pos > 0) pdf.addPage();
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, -pos, imgW, imgH);
+        pos += pageH;
+      }
+      pdf.save("parachute-severance-analysis.pdf");
+      setPdfLoading(false);
+    }).catch(() => setPdfLoading(false));
+  }
+
   if (printView) {
     const R = ({ k, v, accent, alert: al }) => <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12.5, borderBottom: "1px solid #F1EFE8" }}><span style={{ color: "#888" }}>{k}</span><span style={{ fontWeight: 500, color: al ? "#993C1D" : accent ? T : "#1A1A18", textAlign: "right", maxWidth: "60%" }}>{v}</span></div>;
     const Sec = ({ n, title, children }) => <div style={{ marginBottom: 20 }}><p style={{ fontSize: 11, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px", paddingBottom: 4, borderBottom: "2px solid " + Tl }}>{n}. {title}</p>{children}</div>;
+    const verdictColor = !asmnt ? T : asmnt.c;
+    const verdictBg = !asmnt ? "rgba(10,107,92,.05)" : asmnt.bg;
+    const barMax = Math.max(...bars.map(b => b.a), 1);
 
     return <div style={{ maxWidth: 640, margin: "0 auto", padding: "24px", fontFamily: "Georgia, serif", color: "#1A1A18", lineHeight: 1.6, fontSize: 13 }}>
-      <button onClick={() => setPrintView(false)} style={{ background: T, color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 500, cursor: "pointer", marginBottom: 16 }}>{"\u2190"} Back to results</button>
-      <p style={{ fontSize: 11, color: "#888", marginBottom: 20, background: "#FFF8E7", padding: "8px 12px", borderRadius: 6 }}>To save as PDF: press <strong>Ctrl+P</strong> (Windows) or <strong>Cmd+P</strong> (Mac) and select "Save as PDF" as the destination.</p>
-
-      {/* Report header */}
-      <div style={{ background: "#333", color: "#fff", padding: "20px 24px", borderRadius: 10, marginBottom: 24 }}>
-        <p style={{ fontSize: 10, color: "rgba(255,255,255,.5)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 4px" }}>Privileged & confidential</p>
-        <p style={{ fontSize: 20, fontWeight: 500, margin: "0 0 2px" }}>Client Intake Summary</p>
-        <p style={{ fontSize: 11, color: "rgba(255,255,255,.5)", margin: 0 }}>Prepared by Parachute Severance Analyzer</p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <button onClick={() => setPrintView(false)} style={{ background: T, color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{"\u2190"} Back to results</button>
+        <button onClick={downloadPdf} disabled={pdfLoading} style={{ background: "#333", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 500, cursor: pdfLoading ? "wait" : "pointer", opacity: pdfLoading ? .6 : 1 }}>{pdfLoading ? "Generating..." : "\u2193 Download PDF"}</button>
       </div>
 
-      <Sec n={1} title="Client profile">
-        <R k="Age" v={res.age + ""} /><R k="Title" v={res.jt || res.rl} /><R k="Industry" v={res.industry || "Not specified"} />
-        <R k="Tenure" v={res.yrs + " years"} /><R k="Base salary" v={$(res.sal)} />
-        {res.bonus > 0 && <R k="Variable compensation" v={$(res.bonus)} />}
-        <R k="Total compensation" v={$(res.tc)} accent />
-        <R k="Role level" v={res.rl} />
-        {res.vd > 0 && <R k="Accrued vacation" v={res.vd + " days (" + $(res.vp) + ")"} />}
-      </Sec>
+      <div ref={pdfRef} style={{ background: "#fff", padding: "24px" }}>
+        {/* Report header */}
+        <div style={{ background: "#333", color: "#fff", padding: "20px 24px", borderRadius: 10, marginBottom: 20 }}>
+          <p style={{ fontSize: 10, color: "rgba(255,255,255,.5)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 4px" }}>Privileged & confidential</p>
+          <p style={{ fontSize: 20, fontWeight: 500, margin: "0 0 2px" }}>Severance Analysis</p>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,.5)", margin: 0 }}>Prepared by Parachute | {res.pn} | {res.jt || res.rl}, age {res.age}, {res.yrs}y tenure</p>
+        </div>
 
-      <Sec n={2} title="Termination details">
-        <R k="Jurisdiction" v={res.pn + " (" + res.esa + ")"} />
-        <R k="Reason" v={(REASONS.find(x => x.id === res.reason) || {}).l || ""} />
-        <R k="Inducement" v={res.ind ? "Yes \u2014 recruited from prior position" : "No"} />
-        <R k="Bad faith in manner" v={res.bf ? "YES \u2014 improper conduct reported" : "Not reported"} alert={res.bf} />
-        <R k="Release signed" v={res.sr ? "YES \u2014 ASSESS ENFORCEABILITY" : "No"} alert={res.sr} />
-        <R k="New employment" v={res.newJob === "yes" ? "Secured" : res.newJob === "looking" ? "Searching" : "Not yet"} />
-        <R k="Non-compete/non-solicit" v={res.nc ? "Yes \u2014 review enforceability" : "No"} />
-      </Sec>
+        {/* ── EXECUTIVE SUMMARY ── */}
+        <div style={{ marginBottom: 24, padding: "18px 20px", borderRadius: 10, border: "2px solid " + T, background: "rgba(10,107,92,.02)" }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 12px" }}>Executive summary</p>
 
-      <Sec n={3} title="Contract analysis">
-        <p style={{ fontSize: 12, color: "#555", margin: "0 0 4px" }}>{res.ci.note}</p>
-        {res.ci.m < 1 && <p style={{ fontSize: 12, color: "#993C1D", fontWeight: 600, margin: "4px 0 0" }}>ACTION: Review clause for Waksdale compliance and ESA floor issues.</p>}
-      </Sec>
+          {/* Verdict */}
+          {asmnt && <div style={{ display: "flex", gap: 10, marginBottom: 14, padding: "10px 12px", borderRadius: 8, background: verdictBg }}>
+            <div style={{ width: 28, height: 28, borderRadius: 6, background: verdictColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", fontSize: 13, fontWeight: 700 }}>{asmnt.i}</div>
+            <div><p style={{ fontSize: 12.5, fontWeight: 600, color: verdictColor, margin: "0 0 2px" }}>{asmnt.l}</p><p style={{ fontSize: 11, color: "#555", margin: 0, lineHeight: 1.4 }}>{asmnt.d}</p></div>
+          </div>}
+          {!asmnt && <p style={{ fontSize: 12, color: "#555", margin: "0 0 14px" }}>No offer provided. The full estimated range is shown below.</p>}
 
-      <Sec n={4} title="Quantum assessment">
-        <p style={{ fontSize: 11, fontWeight: 600, color: "#888", margin: "0 0 6px" }}>Statutory minimum</p>
-        <R k="Termination pay" v={res.tw + " weeks (" + $(res.tw * res.wk) + ")"} />
-        {res.hs && <R k="Severance pay" v={res.sw + " weeks (" + $(res.sw * res.wk) + ")"} />}
-        <R k="Total statutory" v={res.totW + " weeks (" + $(res.esaAmt) + ")"} accent />
-        <div style={{ height: 12 }} />
-        <p style={{ fontSize: 11, fontWeight: 600, color: "#888", margin: "0 0 6px" }}>Common law reasonable notice (Bardal factors)</p>
-        <R k="Conservative" v={res.cL + " months (" + $(res.cLA) + ")"} />
-        <R k="Midpoint" v={res.cM + " months (" + $(res.cMA) + ")"} accent />
-        <R k="Aggressive" v={res.cH + " months (" + $(res.cHA) + ")"} />
-        <div style={{ height: 8 }} />
-        <p style={{ fontSize: 11, color: "#555" }}>
-          {"Modifiers: Age=" + (res.age >= 55 ? "High" : res.age >= 45 ? "Mod-high" : res.age >= 35 ? "Moderate" : "Low")}
-          {res.ind && " | Inducement +" + res.indPct + "%"}{res.bf && " | Bad faith +10%"}{res.ci.m < 1 && " | Contract -" + Math.round((1 - res.ci.m) * 100) + "%"}
-        </p>
-      </Sec>
-
-      {res.off !== null && <Sec n={5} title="Offer analysis">
-        <R k="Offer" v={$(res.off) + " (" + res.offMo + " months)"} />
-        <R k="vs. statutory floor" v={res.off >= res.esaAmt ? "ABOVE" : "BELOW"} alert={res.off < res.esaAmt} accent={res.off >= res.esaAmt} />
-        <R k="vs. CL midpoint" v={res.off >= res.cMA ? "At or above" : $(res.cMA - res.off) + " below"} alert={res.off < res.cMA} accent={res.off >= res.cMA} />
-      </Sec>}
-
-      <Sec n={res.off !== null ? 6 : 5} title="Recommended strategy">
-        {res.sr && <p style={{ fontSize: 12, color: "#993C1D", fontWeight: 600, margin: "0 0 8px" }}>PRIORITY: Assess release enforceability (duress, independent advice, adequacy, ESA floor)</p>}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, margin: "8px 0 12px" }}>
-          {[["Opening", res.cH, res.cHA], ["Target", res.cM, res.cMA], ["Floor", res.cL, res.cLA]].map(([label, mo, amt]) => (
-            <div key={label} style={{ textAlign: "center", padding: "12px 8px", borderRadius: 8, border: label === "Target" ? "2px solid " + T : "1px solid #E8E6E0" }}>
-              <p style={{ fontSize: 10, color: label === "Target" ? T : "#888", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>{label}</p>
-              <p style={{ fontSize: 18, fontWeight: 500, margin: "0 0 1px", color: label === "Target" ? T : "#1A1A18" }}>{mo} mo</p>
-              <p style={{ fontSize: 11, color: "#B4B2A9", margin: 0 }}>{$(amt)}</p>
+          {/* Key numbers */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+            <div style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #E8E6E0" }}>
+              <p style={{ fontSize: 9, color: "#888", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>Legal floor</p>
+              <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 1px" }}>{$(res.esaAmt)}</p>
+              <p style={{ fontSize: 10, color: "#B4B2A9", margin: 0 }}>{res.totW} weeks statutory</p>
             </div>
-          ))}
-        </div>
-        {(res.bens || []).length > 0 && <p style={{ fontSize: 12, color: "#555" }}>Include: benefits continuation, pro-rated bonus, vacation payout, reference</p>}
-        {res.dl && <p style={{ fontSize: 12, color: "#993C1D" }}>NOTE: Signing deadline{res.dlDays ? " (" + res.dlDays + " days)" : ""} reported. Consider extension.</p>}
-      </Sec>
+            <div style={{ padding: "10px 12px", borderRadius: 8, border: "2px solid " + T, background: "rgba(10,107,92,.03)" }}>
+              <p style={{ fontSize: 9, color: T, margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>Court award (mid)</p>
+              <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 1px", color: T }}>{$(res.cMA)}</p>
+              <p style={{ fontSize: 10, color: "#B4B2A9", margin: 0 }}>{res.cM} months common law</p>
+            </div>
+          </div>
 
-      <Sec n={res.off !== null ? 7 : 6} title="Documents to request from client">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-          {["Employment contract (all versions)", "Termination letter", "Severance offer / release", "Last 3 pay stubs", "T4s (last 2 years)", "Benefits booklet", "Stock/RSU plan docs", "Performance reviews (last 2 years)", "Record of Employment", "Relevant correspondence", "Non-compete / non-solicit"].map(d => <div key={d} style={{ fontSize: 11, color: "#555", display: "flex", gap: 5 }}><span style={{ color: "#D3D1C7" }}>{"\u2610"}</span>{d}</div>)}
+          {/* Visual bar comparison */}
+          <div>{bars.map((b, i) => <div key={i} style={{ marginBottom: 6 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, marginBottom: 2 }}>
+              <span style={{ color: "#555", fontWeight: 500 }}>{b.l}</span>
+              <span style={{ fontWeight: 600, color: b.tc || "#1A1A18" }}>{$(b.a)}</span>
+            </div>
+            <div style={{ background: "#F1EFE8", borderRadius: 4, height: 16, overflow: "hidden" }}>
+              <div style={{ width: (b.a / barMax * 100) + "%", height: "100%", background: b.c, borderRadius: 4 }} />
+            </div>
+          </div>)}</div>
         </div>
-      </Sec>
 
-      <div style={{ borderTop: "1px solid #E8E6E0", paddingTop: 12, marginTop: 12 }}>
-        <p style={{ fontSize: 10, color: "#888", margin: 0, lineHeight: 1.5 }}>Generated by Parachute Severance Analyzer. For informational purposes only. Not a substitute for independent legal analysis.</p>
+        {/* ── DETAILED SECTIONS ── */}
+        <Sec n={1} title="Client profile">
+          <R k="Age" v={res.age + ""} /><R k="Title" v={res.jt || res.rl} /><R k="Industry" v={res.industry || "Not specified"} />
+          <R k="Tenure" v={res.yrs + " years"} /><R k="Base salary" v={$(res.sal)} />
+          {res.bonus > 0 && <R k="Variable compensation" v={$(res.bonus)} />}
+          <R k="Total compensation" v={$(res.tc)} accent />
+          <R k="Role level" v={res.rl} />
+          {res.vd > 0 && <R k="Accrued vacation" v={res.vd + " days (" + $(res.vp) + ")"} />}
+        </Sec>
+
+        <Sec n={2} title="Termination details">
+          <R k="Jurisdiction" v={res.pn + " (" + res.esa + ")"} />
+          <R k="Reason" v={(REASONS.find(x => x.id === res.reason) || {}).l || ""} />
+          <R k="Inducement" v={res.ind ? "Yes \u2014 recruited from prior position" : "No"} />
+          <R k="Bad faith in manner" v={res.bf ? "YES \u2014 improper conduct reported" : "Not reported"} alert={res.bf} />
+          <R k="Release signed" v={res.sr ? "YES \u2014 ASSESS ENFORCEABILITY" : "No"} alert={res.sr} />
+          <R k="New employment" v={res.newJob === "yes" ? "Secured" : res.newJob === "looking" ? "Searching" : "Not yet"} />
+          <R k="Non-compete/non-solicit" v={res.nc ? "Yes \u2014 review enforceability" : "No"} />
+        </Sec>
+
+        <Sec n={3} title="Contract analysis">
+          <p style={{ fontSize: 12, color: "#555", margin: "0 0 4px" }}>{res.ci.note}</p>
+          {res.ci.m < 1 && <p style={{ fontSize: 12, color: "#993C1D", fontWeight: 600, margin: "4px 0 0" }}>ACTION: Review clause for Waksdale compliance and ESA floor issues.</p>}
+        </Sec>
+
+        <Sec n={4} title="Quantum assessment">
+          <p style={{ fontSize: 11, fontWeight: 600, color: "#888", margin: "0 0 6px" }}>Statutory minimum</p>
+          <R k="Termination pay" v={res.tw + " weeks (" + $(res.tw * res.wk) + ")"} />
+          {res.hs && <R k="Severance pay" v={res.sw + " weeks (" + $(res.sw * res.wk) + ")"} />}
+          <R k="Total statutory" v={res.totW + " weeks (" + $(res.esaAmt) + ")"} accent />
+          <div style={{ height: 12 }} />
+          <p style={{ fontSize: 11, fontWeight: 600, color: "#888", margin: "0 0 6px" }}>Common law reasonable notice (Bardal factors)</p>
+          <R k="Conservative" v={res.cL + " months (" + $(res.cLA) + ")"} />
+          <R k="Midpoint" v={res.cM + " months (" + $(res.cMA) + ")"} accent />
+          <R k="Aggressive" v={res.cH + " months (" + $(res.cHA) + ")"} />
+          <div style={{ height: 8 }} />
+          <p style={{ fontSize: 11, color: "#555" }}>
+            {"Modifiers: Age=" + (res.age >= 55 ? "High" : res.age >= 45 ? "Mod-high" : res.age >= 35 ? "Moderate" : "Low")}
+            {res.ind && " | Inducement +" + res.indPct + "%"}{res.bf && " | Bad faith +10%"}{res.ci.m < 1 && " | Contract -" + Math.round((1 - res.ci.m) * 100) + "%"}
+          </p>
+        </Sec>
+
+        {res.off !== null && <Sec n={5} title="Offer analysis">
+          <R k="Offer" v={$(res.off) + " (" + res.offMo + " months)"} />
+          <R k="vs. statutory floor" v={res.off >= res.esaAmt ? "ABOVE" : "BELOW"} alert={res.off < res.esaAmt} accent={res.off >= res.esaAmt} />
+          <R k="vs. CL midpoint" v={res.off >= res.cMA ? "At or above" : $(res.cMA - res.off) + " below"} alert={res.off < res.cMA} accent={res.off >= res.cMA} />
+        </Sec>}
+
+        <Sec n={res.off !== null ? 6 : 5} title="Recommended strategy">
+          {res.sr && <p style={{ fontSize: 12, color: "#993C1D", fontWeight: 600, margin: "0 0 8px" }}>PRIORITY: Assess release enforceability (duress, independent advice, adequacy, ESA floor)</p>}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, margin: "8px 0 12px" }}>
+            {[["Opening", res.cH, res.cHA], ["Target", res.cM, res.cMA], ["Floor", res.cL, res.cLA]].map(([label, mo, amt]) => (
+              <div key={label} style={{ textAlign: "center", padding: "12px 8px", borderRadius: 8, border: label === "Target" ? "2px solid " + T : "1px solid #E8E6E0" }}>
+                <p style={{ fontSize: 10, color: label === "Target" ? T : "#888", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>{label}</p>
+                <p style={{ fontSize: 18, fontWeight: 500, margin: "0 0 1px", color: label === "Target" ? T : "#1A1A18" }}>{mo} mo</p>
+                <p style={{ fontSize: 11, color: "#B4B2A9", margin: 0 }}>{$(amt)}</p>
+              </div>
+            ))}
+          </div>
+          {(res.bens || []).length > 0 && <p style={{ fontSize: 12, color: "#555" }}>Include: benefits continuation, pro-rated bonus, vacation payout, reference</p>}
+          {res.dl && <p style={{ fontSize: 12, color: "#993C1D" }}>NOTE: Signing deadline{res.dlDays ? " (" + res.dlDays + " days)" : ""} reported. Consider extension.</p>}
+        </Sec>
+
+        <Sec n={res.off !== null ? 7 : 6} title="Documents to request from client">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+            {["Employment contract (all versions)", "Termination letter", "Severance offer / release", "Last 3 pay stubs", "T4s (last 2 years)", "Benefits booklet", "Stock/RSU plan docs", "Performance reviews (last 2 years)", "Record of Employment", "Relevant correspondence", "Non-compete / non-solicit"].map(d => <div key={d} style={{ fontSize: 11, color: "#555", display: "flex", gap: 5 }}><span style={{ color: "#D3D1C7" }}>{"\u2610"}</span>{d}</div>)}
+          </div>
+        </Sec>
+
+        <div style={{ borderTop: "1px solid #E8E6E0", paddingTop: 12, marginTop: 12 }}>
+          <p style={{ fontSize: 10, color: "#888", margin: 0, lineHeight: 1.5 }}>Generated by Parachute Severance Analyzer (useparachute.ca). For informational purposes only. Not a substitute for independent legal analysis.</p>
+        </div>
       </div>
     </div>;
   }
@@ -727,8 +797,11 @@ function Res({ res, onReset }) {
 
     <Fade delay={115}><div style={CD}><p style={SL}>Comparison</p><BViz bars={bars} /></div></Fade>
 
-    {/* WHAT-IF SLIDER */}
-    <Fade delay={120}><WhatIf res={res} /></Fade>
+    {/* SAVE PROMPT */}
+    <Fade delay={118}><div style={{ background: "rgba(10,107,92,.04)", borderRadius: 11, padding: "12px 15px", marginBottom: 10, border: "1.5px solid rgba(10,107,92,.15)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+      <div><p style={{ fontSize: 11.5, fontWeight: 600, color: T, margin: "0 0 2px" }}>Save your analysis</p><p style={{ fontSize: 10.5, color: "#666", margin: 0, lineHeight: 1.35 }}>Download a PDF with your full report, verdict, and bar chart.</p></div>
+      <button onClick={() => { setPrintView(true); window.scrollTo(0, 0); }} style={{ background: T, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 11, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>{"\u2193"} PDF</button>
+    </div></Fade>
 
     {/* TERRITORY NOTE */}
     {res.tr && <Fade delay={122}><div style={{ background: "rgba(186,117,23,.07)", borderRadius: 10, padding: "11px 14px", marginBottom: 10, fontSize: 11, color: "#633806", lineHeight: 1.45 }}>Territorial case law on reasonable notice is limited compared to provincial jurisdictions. Courts in the territories generally apply Bardal factors, but with fewer local precedents to draw from. An employment lawyer familiar with your territory can give you the sharpest estimate.</div></Fade>}
@@ -851,7 +924,7 @@ function Res({ res, onReset }) {
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           <button onClick={() => copy(lawyerRpt, "lr")} style={{ flex: 1, background: "#333", color: "#fff", border: "none", borderRadius: 7, padding: "8px", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{cp === "lr" ? "\u2713 Copied" : "Copy as text"}</button>
-          <button onClick={() => { setPrintView(true); window.scrollTo(0, 0); }} style={{ flex: 1, background: T, color: "#fff", border: "none", borderRadius: 7, padding: "8px", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>View printable report</button>
+          <button onClick={() => { setPrintView(true); window.scrollTo(0, 0); }} style={{ flex: 1, background: T, color: "#fff", border: "none", borderRadius: 7, padding: "8px", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>View report & download PDF</button>
         </div>
       </div>}
     </div></Fade>
@@ -940,25 +1013,26 @@ export default function App() {
   const [res, setRes] = useState(null);
   const [fade, setFade] = useState(false);
 
-  function go(s) { setFade(true); setTimeout(() => { if (s === 5) setRes(calc(d)); setStep(s); window.scrollTo(0, 0); setTimeout(() => setFade(false), 25); }, 150); }
+  function go(s) { setFade(true); setTimeout(() => { if (s === 6) setRes(calc(d)); setStep(s); window.scrollTo(0, 0); setTimeout(() => setFade(false), 25); }, 150); }
 
   const tenure = (parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12;
-  const ok = step <= 0 ? true : step === 1 ? !!d.province : step === 2 ? !!(d.age && (d.years || d.months) && d.salary && d.role) : step === 3 ? !!(d.reason && (tenure >= 3 || d.induced !== null) && d.hasContract !== null) : step === 4 ? d.hasOffer !== null && (d.hasOffer === false || !!((d.offFmt === "amt" && d.offAmt) || (d.offFmt === "wks" && d.offWks) || (d.offFmt === "mos" && d.offMos))) : false;
+  const ok = step <= 0 ? true : step === 1 ? !!d.province : step === 2 ? !!(d.age && (d.years || d.months) && d.salary && d.role) : step === 3 ? !!(d.reason && (tenure >= 3 || d.induced !== null) && d.hasContract !== null) : step === 4 ? true : step === 5 ? d.hasOffer !== null && (d.hasOffer === false || !!((d.offFmt === "amt" && d.offAmt) || (d.offFmt === "wks" && d.offWks) || (d.offFmt === "mos" && d.offMos))) : false;
 
   function reset() { setStep(-1); setRes(null); setD({ province: "", age: "", years: "", months: "", salary: "", bonus: "", role: "", jobTitle: "", sevElig: false, hasOffer: null, offFmt: "amt", offAmt: "", offWks: "", offMos: "", reason: "", induced: null, hasContract: null, contractTerms: false, contractAge: "", bens: [], industry: "", vacDays: "", signedRelease: null, deadline: null, deadlineDays: "", hasDependents: null, badFaith: null, newJob: "", nonCompete: null }); }
 
   if (step === -1) return <Landing onStart={() => setStep(1)} />;
 
   return <div style={{ minHeight: "100vh", background: "linear-gradient(165deg, #FAFAF7 0%, #F4F2ED 40%, #EDE9E1 100%)", color: "#1A1A18", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif" }}>
-    {step > 0 && step < 5 && <TopBar step={step} onBack={() => go(step === 1 ? -1 : step - 1)} />}
-    {step > 0 && step < 5 && <Dots c={step - 1} t={TS} />}
-    <div style={{ opacity: fade ? 0 : 1, transform: fade ? "translateX(8px)" : "translateX(0)", transition: "all .15s ease", paddingTop: step === 5 ? 10 : 8, paddingBottom: step >= 1 && step <= 4 ? 72 : 14 }}>
+    {step > 0 && step < 6 && <TopBar step={step} onBack={() => go(step === 1 ? -1 : step - 1)} />}
+    {step > 0 && step < 6 && <Dots c={step - 1} t={TS} />}
+    <div style={{ opacity: fade ? 0 : 1, transform: fade ? "translateX(8px)" : "translateX(0)", transition: "all .15s ease", paddingTop: step === 6 ? 10 : 8, paddingBottom: step >= 1 && step <= 5 ? 72 : 14 }}>
       {step === 1 && <S1 d={d} setD={setD} />}
       {step === 2 && <S2 d={d} setD={setD} />}
       {step === 3 && <S3 d={d} setD={setD} />}
       {step === 4 && <S4 d={d} setD={setD} />}
-      {step === 5 && res && <Res res={res} onReset={reset} />}
+      {step === 5 && <S5 d={d} setD={setD} />}
+      {step === 6 && res && <Res res={res} onReset={reset} />}
     </div>
-    {step >= 1 && step <= 4 && <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "10px 20px 16px", background: "linear-gradient(transparent, #F4F2ED 30%)" }}><div style={{ maxWidth: 430, margin: "0 auto" }}><Btn onClick={() => go(step + 1)} disabled={!ok} full>{step === 4 ? "Analyze my severance \u2192" : "Continue \u2192"}</Btn></div></div>}
+    {step >= 1 && step <= 5 && <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "10px 20px 16px", background: "linear-gradient(transparent, #F4F2ED 30%)" }}><div style={{ maxWidth: 430, margin: "0 auto" }}><Btn onClick={() => go(step + 1)} disabled={!ok} full>{step === 5 ? "Analyze my severance \u2192" : "Continue \u2192"}</Btn></div></div>}
   </div>;
 }
