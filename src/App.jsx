@@ -114,7 +114,7 @@ function Fld({ label, value, onChange, type, prefix, placeholder, help, suffix }
     {label && <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</label>}
     <div style={{ display: "flex", alignItems: "center", background: "var(--bg-card)", borderRadius: 9, border: f ? "2px solid " + T : "1.5px solid var(--border)", padding: f ? "0 12px" : "0 13px", boxShadow: f ? "0 0 0 3px rgba(10,107,92,.06)" : "none", transition: "all .12s", minWidth: 0 }}>
       {prefix && <span style={{ color: "var(--text-muted)", fontSize: 14, marginRight: 4 }}>{prefix}</span>}
-      <input type={type || "text"} value={value} onChange={e => onChange(e.target.value)} onFocus={() => setF(true)} onBlur={() => setF(false)} placeholder={placeholder} style={{ flex: 1, border: "none", outline: "none", fontSize: 14, padding: "9px 0", background: "transparent", color: "var(--text)", minWidth: 0, width: "100%" }} />
+      <input type={type || "text"} value={value} onChange={e => onChange(e.target.value)} onFocus={() => setF(true)} onBlur={() => setF(false)} placeholder={placeholder} style={{ flex: 1, border: "none", outline: "none", fontSize: 16, padding: "9px 0", background: "transparent", color: "var(--text)", minWidth: 0, width: "100%" }} />
       {suffix && <span style={{ color: "var(--text-dim)", fontSize: 11, flexShrink: 0 }}>{suffix}</span>}
     </div>
     {help && <p style={{ fontSize: 10, color: "var(--text-dim)", marginTop: 2, marginBottom: 0, lineHeight: 1.3 }}>{help}</p>}
@@ -385,7 +385,7 @@ function S1({ d, setD }) {
             onChange={e => { setSearch(e.target.value); if (!open) setOpen(true); }}
             onClick={e => { e.stopPropagation(); setOpen(true); }}
             placeholder="Start typing or select..."
-            style={{ flex: 1, border: "none", outline: "none", fontSize: 14, padding: "11px 0", background: "transparent", color: "var(--text)", cursor: "pointer" }}
+            style={{ flex: 1, border: "none", outline: "none", fontSize: 16, padding: "11px 0", background: "transparent", color: "var(--text)", cursor: "pointer" }}
           />
           <span style={{ color: "var(--text-muted)", fontSize: 12, transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform .15s" }}>{"\u25BE"}</span>
         </div>
