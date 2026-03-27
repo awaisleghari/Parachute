@@ -168,7 +168,7 @@ function Landing({ onStart }) {
 
   const features = [
     { k: "calc", t: "Severance estimates", d: "Statutory minimums and common law court ranges, calculated from your actual numbers and explained in plain English.", tint: "rgba(159,225,203,.12)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
-    { k: "letter", t: "Negotiation letter", d: "Five tone-calibrated letters, from aggressive to strategic, matched to how your offer compares.", tint: "rgba(232,168,76,.1)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+    { k: "letter", t: "Negotiation letter", d: "Five tone-calibrated letters, from aggressive to strategic, matched to how your offer compares.", tint: "rgba(80,200,170,.1)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
     { k: "plan", t: "Action plan", d: "Timed checklists from day one through your first lawyer meeting, so you don't miss critical deadlines.", tint: "rgba(130,180,255,.1)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> },
     { k: "report", t: "Lawyer report", d: "A structured intake summary you can send ahead of your first meeting. It saves time, and saves you money.", tint: "rgba(200,160,255,.08)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
   ];
@@ -177,11 +177,17 @@ function Landing({ onStart }) {
 
   return <div style={{ minHeight: "100vh", color: "#fff", fontFamily: BF, position: "relative", overflow: "hidden" }}>
     {/* Background layers */}
-    <div style={{ position: "fixed", inset: 0, background: "linear-gradient(160deg, #021E19 0%, #053D32 25%, #0A6B5C 50%, #064E3E 75%, #032E27 100%)", zIndex: 0 }} />
-    <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse 80% 60% at 30% 20%, rgba(16,180,140,.15) 0%, transparent 60%), radial-gradient(ellipse 70% 50% at 75% 75%, rgba(6,78,62,.5) 0%, transparent 60%)", zIndex: 0 }} />
-    <div style={{ position: "fixed", inset: 0, opacity: .03, zIndex: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundSize: "128px" }} />
-    <div style={{ position: "fixed", top: "-30%", right: "-15%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, rgba(159,225,203,.1) 0%, transparent 55%)", filter: "blur(80px)", transform: `translate(${scrollY * -.02}px, ${scrollY * .01}px)`, zIndex: 0 }} />
-    <div style={{ position: "fixed", bottom: "-20%", left: "-10%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(10,180,130,.08) 0%, transparent 55%)", filter: "blur(80px)", transform: `translate(${scrollY * .015}px, ${scrollY * -.01}px)`, zIndex: 0 }} />
+    <div style={{ position: "fixed", inset: 0, background: "linear-gradient(160deg, #021E19 0%, #042F28 20%, #0A6B5C 42%, #064E3E 58%, #0B3845 78%, #0A2540 100%)", zIndex: 0 }} />
+    <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse 80% 60% at 25% 15%, rgba(16,180,140,.18) 0%, transparent 55%), radial-gradient(ellipse 60% 50% at 80% 80%, rgba(30,80,160,.12) 0%, transparent 55%), radial-gradient(ellipse 50% 40% at 60% 30%, rgba(120,80,200,.06) 0%, transparent 50%)", zIndex: 0 }} />
+    <div style={{ position: "fixed", inset: 0, opacity: .025, zIndex: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundSize: "128px" }} />
+    {/* Aurora orbs */}
+    <div style={{ position: "fixed", top: "-25%", right: "-10%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, rgba(100,220,180,.12) 0%, transparent 55%)", filter: "blur(80px)", transform: `translate(${scrollY * -.02}px, ${scrollY * .01}px)`, zIndex: 0 }} />
+    <div style={{ position: "fixed", bottom: "-20%", left: "-10%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(60,120,220,.1) 0%, transparent 55%)", filter: "blur(90px)", transform: `translate(${scrollY * .015}px, ${scrollY * -.01}px)`, zIndex: 0 }} />
+    <div style={{ position: "fixed", top: "50%", right: "20%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(140,100,220,.07) 0%, transparent 55%)", filter: "blur(70px)", transform: `translate(${scrollY * -.01}px, ${scrollY * -.015}px)`, zIndex: 0 }} />
+    <div style={{ position: "fixed", top: "10%", left: "30%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(16,200,160,.06) 0%, transparent 55%)", filter: "blur(60px)", transform: `translate(${scrollY * .01}px, ${scrollY * .008}px)`, zIndex: 0 }} />
+    <style>{`
+      @keyframes ctaGlow { 0%,100% { opacity: .4; transform: translate(-50%,-50%) scale(1); } 50% { opacity: .6; transform: translate(-50%,-50%) scale(1.1); } }
+    `}</style>
 
     {/* ─── HERO SECTION ─── */}
     <div style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 28px 80px", textAlign: "center" }}>
@@ -212,25 +218,30 @@ function Landing({ onStart }) {
 
       {/* CTA */}
       <div style={ani(.4)}>
-        {!showTerms ? <button
+        {!showTerms ? <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
+          {/* Glow behind CTA */}
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 200, height: 60, borderRadius: 60, background: "radial-gradient(ellipse, rgba(100,220,180,.3) 0%, rgba(60,120,220,.15) 50%, transparent 80%)", filter: "blur(20px)", animation: "ctaGlow 3s ease-in-out infinite", zIndex: 0, pointerEvents: "none" }} />
+          <button
           onMouseEnter={() => setHov("cta")}
           onMouseLeave={() => setHov(null)}
           onClick={() => setShowTerms(true)}
           style={{
+            position: "relative", zIndex: 1,
             padding: "18px 48px",
             borderRadius: 60,
             border: "none",
-            background: hov === "cta" ? "#E8A84C" : "#EDBC73",
-            color: "#1A1000",
+            background: hov === "cta" ? "#fff" : "rgba(255,255,255,.95)",
+            color: "#053D32",
             fontSize: 17,
             fontWeight: 600,
             fontFamily: BF,
             cursor: "pointer",
             transform: hov === "cta" ? "translateY(-2px)" : "translateY(0)",
-            boxShadow: hov === "cta" ? "0 16px 48px rgba(232,168,76,.35), 0 0 0 1px rgba(232,168,76,.3)" : "0 6px 24px rgba(0,0,0,.15), 0 0 0 1px rgba(232,168,76,.15)",
+            boxShadow: hov === "cta" ? "0 16px 48px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.2)" : "0 6px 24px rgba(0,0,0,.15)",
             transition: "all .25s cubic-bezier(.25,1,.5,1)",
             letterSpacing: ".01em",
           }}>Start your free analysis →</button>
+        </div>
         : <div style={{ maxWidth: 480, margin: "0 auto", background: "rgba(0,0,0,.35)", borderRadius: 20, padding: "24px", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,.08)", textAlign: "left" }}>
           <p style={{ fontSize: 17, fontWeight: 700, margin: "0 0 4px" }}>Terms of Use & Disclaimer</p>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,.5)", margin: "0 0 14px" }}>Please read carefully before proceeding.</p>
@@ -247,8 +258,8 @@ function Landing({ onStart }) {
             onClick={agreed ? onStart : undefined}
             style={{
               width: "100%", padding: "16px", borderRadius: 12, border: "none",
-              background: agreed ? (hov === "go" ? "#E8A84C" : "#EDBC73") : "rgba(255,255,255,.1)",
-              color: agreed ? "#1A1000" : "rgba(255,255,255,.25)",
+              background: agreed ? (hov === "go" ? "#fff" : "rgba(255,255,255,.95)") : "rgba(255,255,255,.1)",
+              color: agreed ? "#053D32" : "rgba(255,255,255,.25)",
               fontSize: 15, fontWeight: 600, fontFamily: BF,
               cursor: agreed ? "pointer" : "not-allowed",
               transform: hov === "go" ? "translateY(-1px)" : "translateY(0)",
@@ -262,16 +273,16 @@ function Landing({ onStart }) {
 
       {/* Scroll indicator */}
       {!showTerms && <div style={{ ...ani(.7), position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)" }}>
-        <div style={{ width: 1, height: 32, background: "linear-gradient(180deg, rgba(232,168,76,.4) 0%, transparent 100%)", margin: "0 auto 6px" }} />
-        <p style={{ fontSize: 11, color: "rgba(232,168,76,.5)", textTransform: "uppercase", letterSpacing: ".12em", fontWeight: 600 }}>Scroll</p>
+        <div style={{ width: 1, height: 32, background: "linear-gradient(180deg, rgba(159,225,203,.35) 0%, transparent 100%)", margin: "0 auto 6px" }} />
+        <p style={{ fontSize: 11, color: "rgba(159,225,203,.4)", textTransform: "uppercase", letterSpacing: ".12em", fontWeight: 600 }}>Scroll</p>
       </div>}
     </div>
 
     {/* ─── FEATURES SECTION ─── */}
     <div style={{ position: "relative", zIndex: 1, padding: "80px 28px 100px" }}>
       <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: "#EDBC73", textTransform: "uppercase", letterSpacing: ".15em", marginBottom: 12, textAlign: "center" }}>What you get</p>
-        <h2 style={{ fontFamily: HF, fontSize: "clamp(28px, 7vw, 42px)", fontWeight: 400, textAlign: "center", margin: "0 0 56px", lineHeight: 1.1 }}>Everything you need.<br /><span style={{ fontStyle: "italic", color: "rgba(232,168,76,.7)" }}>Nothing you don't.</span></h2>
+        <p style={{ fontSize: 12, fontWeight: 700, color: Tl, textTransform: "uppercase", letterSpacing: ".15em", marginBottom: 12, textAlign: "center" }}>What you get</p>
+        <h2 style={{ fontFamily: HF, fontSize: "clamp(28px, 7vw, 42px)", fontWeight: 400, textAlign: "center", margin: "0 0 56px", lineHeight: 1.1 }}>Everything you need.<br /><span style={{ fontStyle: "italic", color: Tl }}>Nothing you don't.</span></h2>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
           {features.map((f, i) => <div
