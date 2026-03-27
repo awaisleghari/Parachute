@@ -72,8 +72,8 @@ function ThemeStyle({ dark }) {
       --bg-page-1: #141414; --bg-page-2: #1A1A1A; --bg-page-3: #1E1E1E;
       --bg-card: #1E1E1E; --bg-subtle: #1A1A1A; --bg-muted: #252525;
       --bg-input: #252525; --bg-toggle: #2A2A2A;
-      --text: #E8E6E0; --text-sec: #AAA; --text-muted: #777;
-      --text-dim: #666; --text-faint: #555;
+      --text: #E8E6E0; --text-sec: #B0ADA6; --text-muted: #8A8780;
+      --text-dim: #7A7772; --text-faint: #6A6762;
       --border: #3A3A3A; --border-light: #333; --border-lighter: #2A2A2A;
       --nav-fade: #1A1A1A; --shadow: rgba(0,0,0,.3);
       --bg-warning: #2A2210; --border-warning: #3D3520; --text-warning: #D4A853;
@@ -150,7 +150,7 @@ const CD = { background: "var(--bg-card)", borderRadius: 12, border: "1px solid 
 /* Brand header for step pages */
 function TopBar({ step, onBack, dark, setDark }) {
   return <div>
-    <div style={{ background: T, padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={{ background: "linear-gradient(135deg, #0A6B5C 0%, #085D50 40%, #0B5A65 100%)", padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
         <Logo size={18} color="#fff" />
         <span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span>
@@ -662,7 +662,7 @@ function buildLawyerReport(r) {
 }
 
 /* ═══════════════════ RESULTS ═══════════════════ */
-function Res({ res, onReset }) {
+function Res({ res, onReset, dark, setDark }) {
   const [eml, setEml] = useState(false);
   const [lrpt, setLrpt] = useState(false);
   const [chk, setChk] = useState(false);
@@ -849,8 +849,11 @@ function Res({ res, onReset }) {
 
   return <div style={{ maxWidth: 520, margin: "0 auto", padding: "0 20px" }}>
     {/* Header */}
-    <div style={{ background: T, margin: "-10px -20px 0", padding: "14px 20px 16px", borderRadius: "0 0 16px 16px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}><Logo size={18} color="#fff" /><span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span></div>
+    <div style={{ background: "linear-gradient(135deg, #0A6B5C 0%, #085D50 40%, #0B5A65 100%)", margin: "-10px -20px 0", padding: "14px 20px 16px", borderRadius: "0 0 16px 16px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}><Logo size={18} color="#fff" /><span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span></div>
+        <button onClick={() => setDark(!dark)} style={{ background: "rgba(255,255,255,.12)", border: "none", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 13, lineHeight: 1, color: "#fff" }}>{dark ? "\u2600" : "\u263E"}</button>
+      </div>
       <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px", color: "#fff" }}>Your analysis</h2>
       <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", margin: 0 }}>{res.pn} {"\u2014"} {res.jt || res.rl}, age {res.age}, {res.yrs}y</p>
     </div>
@@ -1109,7 +1112,7 @@ export default function App() {
       {step === 3 && <S3 d={d} setD={setD} />}
       {step === 4 && <S4 d={d} setD={setD} />}
       {step === 5 && <S5 d={d} setD={setD} />}
-      {step === 6 && res && <Res res={res} onReset={reset} />}
+      {step === 6 && res && <Res res={res} onReset={reset} dark={dark} setDark={setDark} />}
     </div>
     {step >= 1 && step <= 5 && <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "10px 20px 16px", background: "linear-gradient(transparent, var(--nav-fade) 30%)" }}><div style={{ maxWidth: 430, margin: "0 auto" }}><Btn onClick={() => go(step + 1)} disabled={!ok} full>{step === 5 ? "Analyze my severance \u2192" : "Continue \u2192"}</Btn></div></div>}
   </div></>;
