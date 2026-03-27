@@ -57,7 +57,11 @@ function calc(d) {
   if (d.hasOffer) { if (d.offFmt === "amt") off = parseFloat(d.offAmt) || 0; else if (d.offFmt === "wks") off = (parseFloat(d.offWks) || 0) * wk; else off = (parseFloat(d.offMos) || 0) * mo; }
   const vd = parseFloat(d.vacDays) || 0;
   const indPct = d.induced && yrs < 3 ? Math.round((ind - 1) * 100) : 0;
-  return { pn: p.n, esa: p.esa, tw, sw, totW, esaAmt: Math.round(totW * wk), wk: Math.round(wk), cL: Math.round(cL * 10) / 10, cM: Math.round(cM * 10) / 10, cH: Math.round(cH * 10) / 10, cLA: Math.round(cL * mo), cMA: Math.round(cM * mo), cHA: Math.round(cH * mo), off, offMo: off !== null && mo > 0 ? Math.round(off / mo * 10) / 10 : null, mo: Math.round(mo), hs: p.hs, sn: p.sn, kc: p.kc, sal: s, bonus: b, tc, yrs: Math.round(yrs * 10) / 10, age: a, rl: r.l, ind: d.induced && yrs < 3, indPct, ci, reason: d.reason, bens: d.bens || [], jt: d.jobTitle, industry: d.industry, sr: d.signedRelease, dl: d.deadline, dlDays: d.deadlineDays, prov: d.province, vd, vp: Math.round(vd * (s / 260)), bf: d.badFaith, newJob: d.newJob, nc: d.nonCompete, hasContract: d.hasContract, contractAge: d.contractAge, tr: !!p.tr };
+  let ujd = null;
+  if (d.province === "FED" && yrs >= 1) ujd = { statute: "Canada Labour Code, s. 240", threshold: "12 months", remedy: "Federally regulated employees with 12+ months of continuous service can file an unjust dismissal complaint. Remedies may include reinstatement to the position and compensation for lost wages. This is a separate avenue from the severance entitlements above and may be more favourable. Strict time limits apply. Consult a lawyer promptly." };
+  if (d.province === "QC" && yrs >= 2) ujd = { statute: "Act respecting labour standards, s. 124", threshold: "2 years", remedy: "Quebec employees with 2+ years of continuous service who believe they were dismissed without good and sufficient cause can file a complaint. Remedies may include reinstatement and compensation. Note that Quebec operates under civil law, and common law reasonable notice principles may apply differently. Consult a lawyer familiar with Quebec employment law." };
+  if (d.province === "NS" && yrs >= 10) ujd = { statute: "Labour Standards Code, s. 71", threshold: "10 years", remedy: "Nova Scotia employees with 10+ years of continuous service have access to an unjust dismissal provision. Remedies may include reinstatement or compensation. This is in addition to your standard termination entitlements. Consult a lawyer to assess whether this applies to your situation." };
+  return { pn: p.n, esa: p.esa, tw, sw, totW, esaAmt: Math.round(totW * wk), wk: Math.round(wk), cL: Math.round(cL * 10) / 10, cM: Math.round(cM * 10) / 10, cH: Math.round(cH * 10) / 10, cLA: Math.round(cL * mo), cMA: Math.round(cM * mo), cHA: Math.round(cH * mo), off, offMo: off !== null && mo > 0 ? Math.round(off / mo * 10) / 10 : null, mo: Math.round(mo), hs: p.hs, sn: p.sn, kc: p.kc, sal: s, bonus: b, tc, yrs: Math.round(yrs * 10) / 10, age: a, rl: r.l, ind: d.induced && yrs < 3, indPct, ci, reason: d.reason, bens: d.bens || [], jt: d.jobTitle, industry: d.industry, sr: d.signedRelease, dl: d.deadline, dlDays: d.deadlineDays, prov: d.province, vd, vp: Math.round(vd * (s / 260)), bf: d.badFaith, newJob: d.newJob, nc: d.nonCompete, hasContract: d.hasContract, contractAge: d.contractAge, tr: !!p.tr, ujd };
 }
 const $ = n => new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
 const T = "#0A6B5C", Td = "#085041", Tl = "#9FE1CB";
@@ -146,146 +150,167 @@ function Landing({ onStart }) {
   const [showTerms, setShowTerms] = useState(false);
   const [hov, setHov] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   useEffect(() => {
-    const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap";
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-    setTimeout(() => setLoaded(true), 80);
+    const l1 = document.createElement("link");
+    l1.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap";
+    l1.rel = "stylesheet";
+    document.head.appendChild(l1);
+    setTimeout(() => setLoaded(true), 100);
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const DF = "'DM Serif Display', Georgia, serif";
+  const HF = "'Instrument Serif', Georgia, serif";
+  const BF = "'Plus Jakarta Sans', -apple-system, system-ui, sans-serif";
+  const ani = (d = 0) => ({ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(24px)", transition: `all .8s cubic-bezier(.16,1,.3,1) ${d}s` });
 
   const features = [
-    { k: "calc", t: "Legal minimums + court estimates", d: "Statutory floor and Bardal-factor range, explained in plain English", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
-    { k: "letter", t: "Negotiation letter", d: "Five tone variants matched to your offer, from aggressive to strategic", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
-    { k: "plan", t: "Action plan + checklists", d: "Timed steps from day one through your first lawyer meeting", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> },
-    { k: "report", t: "Lawyer report", d: "Structured intake summary formatted for counsel. Save time and money.", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
+    { k: "calc", t: "Severance estimates", d: "Statutory minimums and common law court ranges, calculated from your actual numbers and explained in plain English.", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
+    { k: "letter", t: "Negotiation letter", d: "Five tone-calibrated letters, from aggressive to strategic, matched to how your offer compares.", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
+    { k: "plan", t: "Action plan", d: "Timed checklists from day one through your first lawyer meeting, so you don't miss critical deadlines.", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> },
+    { k: "report", t: "Lawyer report", d: "A structured intake summary you can send ahead of your first meeting. It saves time, and saves you money.", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
   ];
 
-  return <div style={{ minHeight: "100vh", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px", position: "relative", overflow: "hidden" }}>
-    {/* Multi-layer background */}
-    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #032E27 0%, #064E3E 20%, #0A6B5C 40%, #0D7D6A 55%, #0A6B5C 70%, #073D34 100%)", zIndex: 0 }} />
-    {/* Mesh overlay for depth */}
-    <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 20% 20%, rgba(16,180,140,.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(6,78,62,.6) 0%, transparent 50%), radial-gradient(ellipse at 50% 0%, rgba(159,225,203,.1) 0%, transparent 40%)", zIndex: 0 }} />
-    {/* Noise grain texture */}
-    <div style={{ position: "absolute", inset: 0, opacity: .035, zIndex: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")", backgroundSize: "128px 128px" }} />
-    {/* Animated ambient light */}
-    <div style={{ position: "absolute", top: "-20%", right: "-5%", width: 550, height: 550, borderRadius: "50%", background: "radial-gradient(circle, rgba(159,225,203,.14) 0%, transparent 60%)", filter: "blur(60px)", animation: "float1 9s ease-in-out infinite", zIndex: 0 }} />
-    <div style={{ position: "absolute", bottom: "-15%", left: "-10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(10,180,130,.1) 0%, transparent 60%)", filter: "blur(70px)", animation: "float2 11s ease-in-out infinite", zIndex: 0 }} />
-    <div style={{ position: "absolute", top: "30%", left: "55%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,.04) 0%, transparent 60%)", filter: "blur(40px)", animation: "float3 7s ease-in-out infinite", zIndex: 0 }} />
-    {/* Subtle top highlight */}
-    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 200, background: "linear-gradient(180deg, rgba(159,225,203,.06) 0%, transparent 100%)", zIndex: 0 }} />
-    <style>{`
-      @keyframes float1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-25px, 20px) scale(1.03); } }
-      @keyframes float2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px, -25px) scale(1.05); } }
-      @keyframes float3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-15px, -18px); } }
-    `}</style>
+  const TERMS = "1. NOT LEGAL ADVICE\nThis tool provides general information about severance and termination entitlements under Canadian federal, provincial, and territorial employment standards legislation and common law principles. It is provided strictly for educational and informational purposes. Nothing generated by this tool constitutes legal advice, a legal opinion, or a recommendation to pursue or refrain from pursuing any particular course of action. No solicitor-client, attorney-client, or other professional relationship is created by your use of this tool.\n\n2. NO WARRANTY; ACCURACY NOT GUARANTEED\nAll estimates, calculations, ranges, and outputs are provided on an \"as is\" and \"as available\" basis, without warranty of any kind, whether express, implied, statutory, or otherwise, including without limitation any warranty of merchantability, fitness for a particular purpose, accuracy, completeness, or non-infringement. The information presented may be inaccurate, incomplete, outdated, or inapplicable to your specific circumstances. Employment legislation, regulations, and case law are subject to change at any time, and this tool may not reflect the most current legal developments in any jurisdiction.\n\n3. LIMITATION OF LIABILITY\nTo the maximum extent permitted by applicable law, the creators, developers, operators, and affiliates of this tool shall not be liable for any direct, indirect, incidental, special, consequential, punitive, or exemplary damages of any kind, including without limitation damages for loss of income, loss of employment benefits, litigation costs, emotional distress, or any other losses arising out of or in connection with your use of or reliance on this tool or any information, content, materials, or outputs made available through it, whether based on contract, tort, negligence, strict liability, or any other legal theory, even if advised of the possibility of such damages.\n\n4. NO RELIANCE\nYou acknowledge and agree that you will not rely on this tool as a substitute for qualified legal counsel. The outputs, including but not limited to severance estimates, negotiation letters, lawyer reports, checklists, benefits guidance, and tax considerations, are templates and general references only. You are solely responsible for verifying all information independently and for retaining a qualified employment lawyer licensed in your jurisdiction before making any decisions regarding your employment, severance, or legal rights.\n\n5. TEMPLATE DOCUMENTS\nAny negotiation letters, demand letters, lawyer reports, or other documents generated by this tool are generic templates that have not been reviewed by a lawyer in connection with your individual circumstances. Sending, relying on, or acting upon these documents without independent legal review is done entirely at your own risk. The use of legal terminology, case law references, or statutory citations within these templates does not render them legal advice.\n\n6. JURISDICTIONAL LIMITATIONS\nCanadian employment law varies significantly across federal, provincial, and territorial jurisdictions. This tool attempts to address multiple jurisdictions but may not accurately capture all applicable legislation, regulations, collective agreement provisions, or case law developments in every jurisdiction. Users in Quebec should note that civil law principles apply, and common law reasonable notice analysis may not apply in the same manner.\n\n7. DATA & PRIVACY\nAll data you enter into this tool is processed entirely within your web browser. No personal information, employment data, or inputs of any kind are transmitted to, collected by, stored on, or accessible by any server, database, third party, or the operators of this tool. Nothing is logged, tracked, or retained.\n\n8. INDEMNIFICATION\nBy using this tool, you agree to indemnify, defend, and hold harmless the creators, developers, operators, and affiliates of this tool from and against any and all claims, liabilities, damages, losses, costs, and expenses (including reasonable legal fees) arising out of or in any way connected with your use of or reliance on this tool.\n\n9. GOVERNING LAW\nThese terms shall be governed by and construed in accordance with the laws of the Province of Ontario and the federal laws of Canada applicable therein, without regard to conflict of law principles.\n\n10. ACCEPTANCE\nBy checking the box below and proceeding, you confirm that you have read, understood, and agree to be bound by all of the foregoing terms and conditions.";
 
-    {/* Content */}
-    <div style={{ position: "relative", zIndex: 1, textAlign: "center", maxWidth: 460, width: "100%" }}>
+  return <div style={{ minHeight: "100vh", color: "#fff", fontFamily: BF, position: "relative", overflow: "hidden" }}>
+    {/* Background layers */}
+    <div style={{ position: "fixed", inset: 0, background: "linear-gradient(160deg, #021E19 0%, #053D32 25%, #0A6B5C 50%, #064E3E 75%, #032E27 100%)", zIndex: 0 }} />
+    <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse 80% 60% at 30% 20%, rgba(16,180,140,.15) 0%, transparent 60%), radial-gradient(ellipse 70% 50% at 75% 75%, rgba(6,78,62,.5) 0%, transparent 60%)", zIndex: 0 }} />
+    <div style={{ position: "fixed", inset: 0, opacity: .03, zIndex: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundSize: "128px" }} />
+    <div style={{ position: "fixed", top: "-30%", right: "-15%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, rgba(159,225,203,.1) 0%, transparent 55%)", filter: "blur(80px)", transform: `translate(${scrollY * -.02}px, ${scrollY * .01}px)`, zIndex: 0 }} />
+    <div style={{ position: "fixed", bottom: "-20%", left: "-10%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(10,180,130,.08) 0%, transparent 55%)", filter: "blur(80px)", transform: `translate(${scrollY * .015}px, ${scrollY * -.01}px)`, zIndex: 0 }} />
 
-      {/* Logo */}
-      <div style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(-12px)", transition: "all .6s cubic-bezier(.25,1,.5,1)", display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 36, padding: "8px 18px 8px 12px", borderRadius: 50, background: "rgba(255,255,255,.07)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,.1)" }}>
-        <Logo size={26} color="#fff" />
-        <span style={{ fontSize: 15, fontWeight: 500, letterSpacing: ".04em" }}>Parachute</span>
+    {/* ─── HERO SECTION ─── */}
+    <div style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 28px 80px", textAlign: "center" }}>
+
+      {/* Logo pill */}
+      <div style={{ ...ani(0), display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 48, padding: "10px 20px 10px 14px", borderRadius: 50, background: "rgba(255,255,255,.06)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,.08)" }}>
+        <Logo size={22} color="#fff" />
+        <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: ".03em" }}>Parachute</span>
       </div>
 
       {/* Headline */}
-      <h1 style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(16px)", transition: "all .8s cubic-bezier(.25,1,.5,1) .1s", fontFamily: DF, fontSize: "clamp(34px, 9vw, 52px)", fontWeight: 400, margin: "0 0 18px", lineHeight: 1.06, letterSpacing: "-0.005em" }}>
+      <h1 style={{ ...ani(.1), fontFamily: HF, fontSize: "clamp(42px, 11vw, 76px)", fontWeight: 400, margin: "0 0 24px", lineHeight: 1.0, letterSpacing: "-0.02em", maxWidth: 700 }}>
         Know what<br />you're owed.
       </h1>
 
-      {/* Sub */}
-      <p style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(12px)", transition: "all .7s cubic-bezier(.25,1,.5,1) .2s", fontSize: 15.5, color: "rgba(255,255,255,.7)", lineHeight: 1.65, maxWidth: 350, margin: "0 auto 40px", fontWeight: 400 }}>
-        Free severance analysis built on Canadian employment law. In 2 minutes, not 2 billable hours.
+      {/* Subtitle */}
+      <p style={{ ...ani(.2), fontSize: "clamp(16px, 4vw, 20px)", color: "rgba(255,255,255,.6)", lineHeight: 1.7, maxWidth: 480, margin: "0 auto 48px", fontWeight: 400 }}>
+        Free severance analysis for all of Canada. Built on employment law, not guesswork. Takes two minutes.
       </p>
 
       {/* Stats */}
-      <div style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(12px)", transition: "all .6s cubic-bezier(.25,1,.5,1) .3s", display: "flex", justifyContent: "center", gap: 0, marginBottom: 40 }}>
-        {[{ n: "14", l: "Jurisdictions" }, { n: "2 min", l: "To complete" }, { n: "Free", l: "Always" }].map((s, i) => <div key={s.l} style={{ textAlign: "center", padding: "0 26px", borderRight: i < 2 ? "1px solid rgba(255,255,255,.15)" : "none" }}>
-          <p style={{ fontSize: 24, fontWeight: 400, margin: "0 0 3px", fontFamily: DF }}>{s.n}</p>
-          <p style={{ fontSize: 10, color: "rgba(255,255,255,.5)", margin: 0, textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 500 }}>{s.l}</p>
-        </div>)}
-      </div>
-
-      {/* Feature cards */}
-      <div style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(16px)", transition: "all .7s cubic-bezier(.25,1,.5,1) .4s", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 36, textAlign: "left" }}>
-        {features.map(f => <div
-          key={f.k}
-          onMouseEnter={() => setHov(f.k)}
-          onMouseLeave={() => setHov(null)}
-          style={{
-            background: hov === f.k ? "rgba(255,255,255,.13)" : "rgba(255,255,255,.06)",
-            borderRadius: 14,
-            padding: "15px 16px",
-            minHeight: 120,
-            border: "1px solid " + (hov === f.k ? "rgba(255,255,255,.2)" : "rgba(255,255,255,.08)"),
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            transform: hov === f.k ? "translateY(-2px)" : "translateY(0)",
-            boxShadow: hov === f.k ? "0 10px 30px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.12)" : "0 2px 8px rgba(0,0,0,.06)",
-            transition: "all .2s cubic-bezier(.25,1,.5,1)",
-            cursor: "default",
-          }}>
-          <div style={{ color: hov === f.k ? "#fff" : "rgba(255,255,255,.55)", marginBottom: 8, transition: "color .2s" }}>{f.icon}</div>
-          <p style={{ fontSize: 12.5, fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3 }}>{f.t}</p>
-          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,.5)", margin: 0, lineHeight: 1.4 }}>{f.d}</p>
+      <div style={{ ...ani(.3), display: "flex", justifyContent: "center", gap: 0, marginBottom: 56 }}>
+        {[{ n: "14", l: "Jurisdictions" }, { n: "2 min", l: "To complete" }, { n: "Free", l: "Always" }].map((s, i) => <div key={s.l} style={{ textAlign: "center", padding: "0 clamp(18px, 5vw, 36px)", borderRight: i < 2 ? "1px solid rgba(255,255,255,.12)" : "none" }}>
+          <p style={{ fontSize: "clamp(22px, 5vw, 32px)", fontWeight: 400, margin: "0 0 4px", fontFamily: HF }}>{s.n}</p>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,.45)", margin: 0, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 }}>{s.l}</p>
         </div>)}
       </div>
 
       {/* CTA */}
-      <div style={{ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(12px)", transition: "all .7s cubic-bezier(.25,1,.5,1) .55s" }}>
+      <div style={ani(.4)}>
         {!showTerms ? <button
           onMouseEnter={() => setHov("cta")}
           onMouseLeave={() => setHov(null)}
           onClick={() => setShowTerms(true)}
           style={{
-            width: "100%",
-            padding: "16px",
-            borderRadius: 14,
+            padding: "18px 48px",
+            borderRadius: 60,
             border: "none",
             background: hov === "cta" ? "#fff" : "rgba(255,255,255,.95)",
-            color: "#064E3E",
-            fontSize: 15,
+            color: "#053D32",
+            fontSize: 17,
             fontWeight: 600,
+            fontFamily: BF,
             cursor: "pointer",
-            transform: hov === "cta" ? "translateY(-1px)" : "translateY(0)",
-            boxShadow: hov === "cta" ? "0 14px 36px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.15)" : "0 4px 16px rgba(0,0,0,.12)",
-            transition: "all .2s cubic-bezier(.25,1,.5,1)",
+            transform: hov === "cta" ? "translateY(-2px)" : "translateY(0)",
+            boxShadow: hov === "cta" ? "0 16px 48px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.2)" : "0 6px 24px rgba(0,0,0,.15)",
+            transition: "all .25s cubic-bezier(.25,1,.5,1)",
             letterSpacing: ".01em",
           }}>Start your free analysis →</button>
-        : <div style={{ background: "rgba(0,0,0,.3)", borderRadius: 16, padding: "20px", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,.1)" }}>
-          <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px" }}>Terms of Use & Disclaimer</p>
-          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,.5)", margin: "0 0 10px" }}>Please read carefully before proceeding.</p>
-          <div style={{ background: "rgba(255,255,255,.06)", borderRadius: 10, padding: "14px 15px", marginBottom: 14, maxHeight: 200, overflowY: "auto", border: "1px solid rgba(255,255,255,.06)" }}>
-            <p style={{ fontSize: 10.5, color: "rgba(255,255,255,.7)", margin: 0, lineHeight: 1.65, whiteSpace: "pre-line" }}>{"1. NOT LEGAL ADVICE\nThis tool provides general information about severance and termination entitlements under Canadian federal, provincial, and territorial employment standards legislation and common law principles. It is provided strictly for educational and informational purposes. Nothing generated by this tool constitutes legal advice, a legal opinion, or a recommendation to pursue or refrain from pursuing any particular course of action. No solicitor-client, attorney-client, or other professional relationship is created by your use of this tool.\n\n2. NO WARRANTY; ACCURACY NOT GUARANTEED\nAll estimates, calculations, ranges, and outputs are provided on an \"as is\" and \"as available\" basis, without warranty of any kind, whether express, implied, statutory, or otherwise, including without limitation any warranty of merchantability, fitness for a particular purpose, accuracy, completeness, or non-infringement. The information presented may be inaccurate, incomplete, outdated, or inapplicable to your specific circumstances. Employment legislation, regulations, and case law are subject to change at any time, and this tool may not reflect the most current legal developments in any jurisdiction.\n\n3. LIMITATION OF LIABILITY\nTo the maximum extent permitted by applicable law, the creators, developers, operators, and affiliates of this tool shall not be liable for any direct, indirect, incidental, special, consequential, punitive, or exemplary damages of any kind, including without limitation damages for loss of income, loss of employment benefits, litigation costs, emotional distress, or any other losses arising out of or in connection with your use of or reliance on this tool or any information, content, materials, or outputs made available through it, whether based on contract, tort, negligence, strict liability, or any other legal theory, even if advised of the possibility of such damages.\n\n4. NO RELIANCE\nYou acknowledge and agree that you will not rely on this tool as a substitute for qualified legal counsel. The outputs, including but not limited to severance estimates, negotiation letters, lawyer reports, checklists, benefits guidance, and tax considerations, are templates and general references only. You are solely responsible for verifying all information independently and for retaining a qualified employment lawyer licensed in your jurisdiction before making any decisions regarding your employment, severance, or legal rights.\n\n5. TEMPLATE DOCUMENTS\nAny negotiation letters, demand letters, lawyer reports, or other documents generated by this tool are generic templates that have not been reviewed by a lawyer in connection with your individual circumstances. Sending, relying on, or acting upon these documents without independent legal review is done entirely at your own risk. The use of legal terminology, case law references, or statutory citations within these templates does not render them legal advice.\n\n6. JURISDICTIONAL LIMITATIONS\nCanadian employment law varies significantly across federal, provincial, and territorial jurisdictions. This tool attempts to address multiple jurisdictions but may not accurately capture all applicable legislation, regulations, collective agreement provisions, or case law developments in every jurisdiction. Users in Quebec should note that civil law principles apply, and common law reasonable notice analysis may not apply in the same manner.\n\n7. DATA & PRIVACY\nAll data you enter into this tool is processed entirely within your web browser. No personal information, employment data, or inputs of any kind are transmitted to, collected by, stored on, or accessible by any server, database, third party, or the operators of this tool. Nothing is logged, tracked, or retained.\n\n8. INDEMNIFICATION\nBy using this tool, you agree to indemnify, defend, and hold harmless the creators, developers, operators, and affiliates of this tool from and against any and all claims, liabilities, damages, losses, costs, and expenses (including reasonable legal fees) arising out of or in any way connected with your use of or reliance on this tool.\n\n9. GOVERNING LAW\nThese terms shall be governed by and construed in accordance with the laws of the Province of Ontario and the federal laws of Canada applicable therein, without regard to conflict of law principles.\n\n10. ACCEPTANCE\nBy checking the box below and proceeding, you confirm that you have read, understood, and agree to be bound by all of the foregoing terms and conditions."}</p>
+        : <div style={{ maxWidth: 480, margin: "0 auto", background: "rgba(0,0,0,.35)", borderRadius: 20, padding: "24px", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,.08)", textAlign: "left" }}>
+          <p style={{ fontSize: 17, fontWeight: 700, margin: "0 0 4px" }}>Terms of Use & Disclaimer</p>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,.5)", margin: "0 0 14px" }}>Please read carefully before proceeding.</p>
+          <div style={{ background: "rgba(255,255,255,.05)", borderRadius: 12, padding: "16px", marginBottom: 16, maxHeight: 220, overflowY: "auto", border: "1px solid rgba(255,255,255,.06)" }}>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,.65)", margin: 0, lineHeight: 1.7, whiteSpace: "pre-line" }}>{TERMS}</p>
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", marginBottom: 14 }}>
-            <div onClick={() => setAgreed(!agreed)} style={{ width: 22, height: 22, borderRadius: 6, border: agreed ? "none" : "2px solid rgba(255,255,255,.3)", background: agreed ? "#fff" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", transition: "all .15s", boxShadow: agreed ? "0 2px 8px rgba(0,0,0,.15)" : "none" }}>{agreed && <span style={{ color: T, fontSize: 13, fontWeight: 700 }}>{"\u2713"}</span>}</div>
-            <span style={{ fontSize: 12.5, color: "rgba(255,255,255,.8)" }}>I have read and agree to these terms</span>
+          <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", marginBottom: 16 }}>
+            <div onClick={() => setAgreed(!agreed)} style={{ width: 24, height: 24, borderRadius: 7, border: agreed ? "none" : "2px solid rgba(255,255,255,.25)", background: agreed ? "#fff" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", transition: "all .15s", boxShadow: agreed ? "0 2px 8px rgba(0,0,0,.15)" : "none" }}>{agreed && <span style={{ color: T, fontSize: 14, fontWeight: 700 }}>{"\u2713"}</span>}</div>
+            <span style={{ fontSize: 14, color: "rgba(255,255,255,.8)" }}>I have read and agree to these terms</span>
           </label>
           <button
             onMouseEnter={() => agreed && setHov("go")}
             onMouseLeave={() => setHov(null)}
             onClick={agreed ? onStart : undefined}
             style={{
-              width: "100%",
-              padding: "14px",
-              borderRadius: 10,
-              border: "none",
-              background: agreed ? (hov === "go" ? "#fff" : "rgba(255,255,255,.95)") : "rgba(255,255,255,.12)",
-              color: agreed ? "#064E3E" : "rgba(255,255,255,.3)",
-              fontSize: 14,
-              fontWeight: 600,
+              width: "100%", padding: "16px", borderRadius: 12, border: "none",
+              background: agreed ? (hov === "go" ? "#fff" : "rgba(255,255,255,.95)") : "rgba(255,255,255,.1)",
+              color: agreed ? "#053D32" : "rgba(255,255,255,.25)",
+              fontSize: 15, fontWeight: 600, fontFamily: BF,
               cursor: agreed ? "pointer" : "not-allowed",
               transform: hov === "go" ? "translateY(-1px)" : "translateY(0)",
               boxShadow: hov === "go" ? "0 8px 24px rgba(0,0,0,.25)" : "none",
               transition: "all .2s cubic-bezier(.25,1,.5,1)",
             }}>{"I understand \u2014 let\u2019s go \u2192"}</button>
         </div>}
-        <p style={{ fontSize: 11, color: "rgba(255,255,255,.45)", textAlign: "center", marginTop: 18, lineHeight: 1.4 }}>Your data stays in your browser. Nothing is stored or sent anywhere.</p>
       </div>
+
+      <p style={{ ...ani(.5), fontSize: 13, color: "rgba(255,255,255,.35)", marginTop: 24 }}>Your data stays in your browser. Nothing is stored or sent anywhere.</p>
+
+      {/* Scroll indicator */}
+      {!showTerms && <div style={{ ...ani(.7), position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)" }}>
+        <div style={{ width: 1, height: 32, background: "linear-gradient(180deg, rgba(255,255,255,.2) 0%, transparent 100%)", margin: "0 auto 6px" }} />
+        <p style={{ fontSize: 11, color: "rgba(255,255,255,.25)", textTransform: "uppercase", letterSpacing: ".12em", fontWeight: 600 }}>Scroll</p>
+      </div>}
+    </div>
+
+    {/* ─── FEATURES SECTION ─── */}
+    <div style={{ position: "relative", zIndex: 1, padding: "80px 28px 100px" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: Tl, textTransform: "uppercase", letterSpacing: ".15em", marginBottom: 12, textAlign: "center" }}>What you get</p>
+        <h2 style={{ fontFamily: HF, fontSize: "clamp(28px, 7vw, 42px)", fontWeight: 400, textAlign: "center", margin: "0 0 56px", lineHeight: 1.1 }}>Everything you need.<br /><span style={{ fontStyle: "italic", color: Tl }}>Nothing you don't.</span></h2>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
+          {features.map((f, i) => <div
+            key={f.k}
+            onMouseEnter={() => setHov(f.k)}
+            onMouseLeave={() => setHov(null)}
+            style={{
+              display: "flex", gap: 20, alignItems: "flex-start",
+              padding: "24px 28px",
+              borderRadius: 18,
+              background: hov === f.k ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.03)",
+              border: "1px solid " + (hov === f.k ? "rgba(255,255,255,.12)" : "rgba(255,255,255,.05)"),
+              transform: hov === f.k ? "translateX(4px)" : "translateX(0)",
+              transition: "all .25s cubic-bezier(.25,1,.5,1)",
+              cursor: "default",
+            }}>
+            <div style={{ color: hov === f.k ? "#fff" : "rgba(255,255,255,.4)", transition: "color .2s", flexShrink: 0, marginTop: 2 }}>{f.icon}</div>
+            <div>
+              <p style={{ fontSize: 17, fontWeight: 600, margin: "0 0 6px" }}>{f.t}</p>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,.5)", margin: 0, lineHeight: 1.6 }}>{f.d}</p>
+            </div>
+          </div>)}
+        </div>
+      </div>
+    </div>
+
+    {/* ─── TRUST FOOTER ─── */}
+    <div style={{ position: "relative", zIndex: 1, padding: "0 28px 60px", textAlign: "center" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "32px", borderRadius: 20, background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.06)" }}>
+        <p style={{ fontSize: 22, fontFamily: HF, margin: "0 0 12px" }}>Built for real people,<br />in real situations.</p>
+        <p style={{ fontSize: 14, color: "rgba(255,255,255,.5)", lineHeight: 1.65, margin: "0 0 24px" }}>Parachute was built by a Canadian lawyer who saw the information gap firsthand. It's free, it's private, and it's not going anywhere.</p>
+        <div style={{ display: "flex", justifyContent: "center", gap: 24 }}>
+          {[{ v: "No accounts", i: "1" }, { v: "No tracking", i: "2" }, { v: "No cost", i: "3" }].map(x => <div key={x.v}>
+            <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 2px" }}>{x.v}</p>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,.3)", margin: 0 }}>Ever.</p>
+          </div>)}
+        </div>
+      </div>
+      <p style={{ fontSize: 12, color: "rgba(255,255,255,.2)", marginTop: 32 }}>&copy; {new Date().getFullYear()} Parachute. For informational purposes only.</p>
     </div>
   </div>;
 }
@@ -567,6 +592,7 @@ function buildLawyerReport(r) {
     rpt += "   vs. CL midpoint: " + (r.off >= r.cMA ? "at or above" : $(r.cMA - r.off) + " below") + "\n";
     rpt += "   Assessment: " + (r.off < r.esaAmt ? "Below statutory minimum. Strong position." : r.off < r.cLA ? "Below common law range. Strong negotiation position." : r.off < r.cMA ? "Below midpoint. Room to negotiate." : "At or above midpoint.") + "\n";
   }
+  if (r.ujd) { rpt += "\n   UNJUST DISMISSAL\n"; rpt += "   " + r.ujd.statute + "\n"; rpt += "   Client meets the " + r.ujd.threshold + " threshold. Unjust dismissal complaint may be available.\n"; rpt += "   Remedies may include reinstatement and back pay. Assess as alternative or parallel track.\n"; }
   rpt += "\n6. RECOMMENDED STRATEGY\n";
   if (r.sr) rpt += "   PRIORITY: Assess release enforceability. Consider: duress, independent legal advice, adequacy of consideration, compliance with ESA floor.\n";
   rpt += "   Target: " + r.cM + " months (" + $(r.cMA) + ")\n";
@@ -693,6 +719,13 @@ function Res({ res, onReset }) {
           </div>)}</div>
         </div>
 
+        {/* ── UNJUST DISMISSAL FLAG ── */}
+        {res.ujd && <div className="pdf-section" style={{ marginBottom: 20, padding: "14px 16px", borderRadius: 8, background: "rgba(10,107,92,.04)", border: "1.5px solid rgba(10,107,92,.2)" }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: T, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: ".04em" }}>Unjust dismissal claim available</p>
+          <p style={{ fontSize: 12, color: "#444", margin: "0 0 6px", lineHeight: 1.5 }}>{res.ujd.remedy}</p>
+          <p style={{ fontSize: 10.5, color: "#888", margin: 0 }}>Statutory basis: {res.ujd.statute}</p>
+        </div>}
+
         {/* ── DETAILED SECTIONS ── */}
         <Sec n={1} title="Client profile">
           <R k="Age" v={res.age + ""} /><R k="Title" v={res.jt || res.rl} /><R k="Industry" v={res.industry || "Not specified"} />
@@ -780,6 +813,12 @@ function Res({ res, onReset }) {
 
     {res.sr && <Fade delay={20}><div style={{ background: "rgba(216,90,48,.08)", borderRadius: 10, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "#712B13", lineHeight: 1.45 }}><strong>{"\u26A0"} You signed a release.</strong> Consult a lawyer urgently. Releases can sometimes be set aside.</div></Fade>}
     {asmnt && <Fade delay={35}><div style={{ background: asmnt.bg, borderRadius: 11, padding: "13px 15px", marginBottom: 10, display: "flex", gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 7, background: asmnt.c, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", fontSize: 14, fontWeight: 700 }}>{asmnt.i}</div><div><p style={{ fontSize: 12.5, fontWeight: 600, color: asmnt.c, margin: "0 0 2px" }}>{asmnt.l}</p><p style={{ fontSize: 11.5, color: "#444", margin: 0, lineHeight: 1.4 }}>{asmnt.d}</p></div></div></Fade>}
+
+    {res.ujd && <Fade delay={40}><div style={{ background: "rgba(10,107,92,.05)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1.5px solid rgba(10,107,92,.2)" }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: T, margin: "0 0 4px" }}>You may have an unjust dismissal claim</p>
+      <p style={{ fontSize: 11, color: "#444", margin: "0 0 6px", lineHeight: 1.45 }}>{res.ujd.remedy}</p>
+      <p style={{ fontSize: 10, color: "#888", margin: 0 }}>Statutory basis: {res.ujd.statute}</p>
+    </div></Fade>}
 
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 10 }}>
       <MC l={"Legal floor"} v={$(res.esaAmt)} s={<Whats tip="Every province sets a bare minimum your employer must pay. This is the absolute floor \u2014 your employer cannot legally offer less than this.">{res.totW + " weeks (statutory minimum)"}</Whats>} delay={55} />
