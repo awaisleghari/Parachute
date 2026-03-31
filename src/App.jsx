@@ -719,7 +719,7 @@ function Res({ res, onReset, dark, setDark }) {
         <button onClick={downloadPdf} disabled={pdfLoading} style={{ background: "#333", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 500, cursor: pdfLoading ? "wait" : "pointer", opacity: pdfLoading ? .6 : 1 }}>{pdfLoading ? "Generating..." : "\u2193 Download PDF"}</button>
       </div>
 
-      <div ref={pdfRef} style={{ background: "#ffffff", padding: "24px", color: "#1A1A18" }}>
+      <div ref={pdfRef} style={{ background: "#ffffff", padding: "24px", color: "#1A1A18", "--bg-card": "#ffffff", "--bg-subtle": "#FAFAF7", "--bg-muted": "#F1EFE8", "--text": "#1A1A18", "--text-sec": "#5F5E5A", "--text-muted": "#888", "--text-dim": "#999", "--text-faint": "#B4B2A9", "--text-alert": "#993C1D", "--text-alert-dark": "#712B13", "--text-warning": "#854F0B", "--bg-warning": "#FFF8E7", "--border-warning": "#F0E6C8", "--border": "#D3D1C7", "--border-light": "#E8E6E0", "--border-lighter": "#F1EFE8" }}>
         {/* Report header */}
         <div style={{ background: "#333", color: "#fff", padding: "20px 24px", borderRadius: 10, marginBottom: 20 }}>
           <p style={{ fontSize: 10, color: "rgba(255,255,255,.5)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 4px" }}>Privileged & confidential</p>
