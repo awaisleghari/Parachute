@@ -669,6 +669,7 @@ function Res({ res, onReset, dark, setDark }) {
   const [ben, setBen] = useState(false);
   const [docs, setDocs] = useState(false);
   const [cp, setCp] = useState(null);
+  const [fb, setFb] = useState(null);
   const [printView, setPrintView] = useState(false);
   const bars = useMemo(() => {
     const it = [{ l: "Legal floor", a: res.esaAmt, c: "#D3D1C7", tc: "var(--text-sec)" }, { l: "Court award (low)", a: res.cLA, c: Tl, tc: Td }, { l: "Court award (mid)", a: res.cMA, c: T, tc: T }, { l: "Court award (high)", a: res.cHA, c: Td, tc: Td }];
@@ -686,7 +687,7 @@ function Res({ res, onReset, dark, setDark }) {
   const email = useMemo(() => buildEmail(res), [res]);
   const lawyerRpt = useMemo(() => buildLawyerReport(res), [res]);
   const roi = useMemo(() => { const f = Math.max(3000, Math.round(res.cMA * .08)), u = res.off !== null ? res.cMA - res.off : Math.round(res.cMA * .4); return u - f > 0 ? { f, u, r: Math.round(u / f * 10) / 10 } : null; }, [res]);
-  function copy(t, l) { try { navigator.clipboard.writeText(t); setCp(l); setTimeout(() => setCp(null), 2000); } catch (e) {} }
+  function copy(t, l) { try { navigator.clipboard.writeText(t); setCp(l); trk("content_copied", { type: l === "e" ? "letter" : l === "lr" ? "lawyer_report" : "summary" }); setTimeout(() => setCp(null), 2000); } catch (e) {} }
   const selBens = (res.bens || []).map(id => BENS.find(b => b.id === id)).filter(Boolean);
 
   const pdfRef = useRef(null);
@@ -703,7 +704,7 @@ function Res({ res, onReset, dark, setDark }) {
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["avoid-all", "css", "legacy"], avoid: [".pdf-section", ".pdf-row", ".pdf-card", ".pdf-strategy"] }
     };
-    html2pdf().set(opt).from(pdfRef.current).save().then(() => setPdfLoading(false)).catch(() => setPdfLoading(false));
+    html2pdf().set(opt).from(pdfRef.current).save().then(() => { setPdfLoading(false); trk("pdf_downloaded"); }).catch(() => setPdfLoading(false));
   }
 
   if (printView) {
@@ -1051,6 +1052,17 @@ function Res({ res, onReset, dark, setDark }) {
       <p style={{ fontSize: 9.5, color: "var(--text-warning)", margin: 0, lineHeight: 1.55, opacity: .85 }}>This analysis is for informational purposes only. It does not constitute legal advice, a legal opinion, or a recommendation, and does not create a solicitor-client relationship. All estimates, calculations, letters, and reports are provided "as is" without warranty of any kind. Information may be inaccurate, incomplete, or not current. You accepted the full Terms of Use before using this tool. Consult a qualified employment lawyer licensed in your jurisdiction before making any decisions.</p>
     </div></Fade>
 
+    {/* FEEDBACK */}
+    <Fade delay={258}><div style={{ background: "var(--bg-card)", borderRadius: 11, padding: "14px 15px", marginBottom: 10, border: "1px solid var(--border-light)", textAlign: "center" }}>
+      {fb === null ? <>
+        <p style={{ fontSize: 12, fontWeight: 500, color: "var(--text)", margin: "0 0 8px" }}>Was this analysis helpful?</p>
+        <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+          <button onClick={() => { setFb("yes"); trk("feedback", { value: "yes" }); }} style={{ padding: "7px 20px", borderRadius: 8, border: "1.5px solid " + T, background: "rgba(10,107,92,.04)", color: T, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{"\uD83D\uDC4D"} Yes</button>
+          <button onClick={() => { setFb("no"); trk("feedback", { value: "no" }); }} style={{ padding: "7px 20px", borderRadius: 8, border: "1.5px solid var(--border)", background: "var(--bg-card)", color: "var(--text-muted)", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{"\uD83D\uDC4E"} No</button>
+        </div>
+      </> : <p style={{ fontSize: 12, color: T, margin: 0, fontWeight: 500 }}>{"\u2713"} Thanks for the feedback.</p>}
+    </div></Fade>
+
     <Fade delay={265}><div style={{ display: "flex", gap: 7, marginBottom: 32 }}>
       <Btn secondary onClick={onReset} full>Start over</Btn>
       <Btn onClick={() => {
@@ -1084,6 +1096,8 @@ const EMPTY = { province: "", age: "", years: "", months: "", salary: "", bonus:
 function loadSession() { try { const s = sessionStorage.getItem("p_state"); if (s) { const p = JSON.parse(s); return { step: p.step ?? -1, d: { ...EMPTY, ...p.d } }; } } catch {} return null; }
 function saveSession(step, d) { try { sessionStorage.setItem("p_state", JSON.stringify({ step, d })); } catch {} }
 
+function trk(e, p) { try { if (window.gtag) window.gtag("event", e, p); } catch {} }
+
 export default function App() {
   const saved = useMemo(() => loadSession(), []);
   const [step, setStep] = useState(saved ? saved.step : -1);
@@ -1094,14 +1108,14 @@ export default function App() {
 
   useEffect(() => { if (step >= 1 && step <= 5) saveSession(step, d); }, [step, d]);
 
-  function go(s) { setFade(true); setTimeout(() => { if (s === 6) setRes(calc(d)); setStep(s); window.scrollTo(0, 0); setTimeout(() => setFade(false), 25); }, 150); }
+  function go(s) { setFade(true); setTimeout(() => { if (s === 6) { setRes(calc(d)); trk("analysis_completed", { province: d.province }); } trk("step_completed", { step: s }); setStep(s); window.scrollTo(0, 0); setTimeout(() => setFade(false), 25); }, 150); }
 
   const tenure = (parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12;
   const ok = step <= 0 ? true : step === 1 ? !!d.province : step === 2 ? !!(d.age && (d.years || d.months) && d.salary && d.role) : step === 3 ? !!(d.reason && (tenure >= 3 || d.induced !== null) && d.hasContract !== null) : step === 4 ? true : step === 5 ? d.hasOffer !== null && (d.hasOffer === false || !!((d.offFmt === "amt" && d.offAmt) || (d.offFmt === "wks" && d.offWks) || (d.offFmt === "mos" && d.offMos))) : false;
 
   function reset() { setStep(-1); setRes(null); setD(EMPTY); try { sessionStorage.removeItem("p_state"); } catch {} window.scrollTo(0, 0); }
 
-  if (step === -1) return <><ThemeStyle dark={dark} /><Landing onStart={() => setStep(1)} /></>;
+  if (step === -1) return <><ThemeStyle dark={dark} /><Landing onStart={() => { trk("analysis_started"); setStep(1); }} /></>;
 
   return <><ThemeStyle dark={dark} /><div style={{ minHeight: "100vh", background: "linear-gradient(165deg, var(--bg-page-1) 0%, var(--bg-page-2) 40%, var(--bg-page-3) 100%)", color: "var(--text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif" }}>
     {step > 0 && step < 6 && <TopBar step={step} onBack={() => go(step === 1 ? -1 : step - 1)} dark={dark} setDark={setDark} />}
