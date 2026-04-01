@@ -661,6 +661,110 @@ function buildLawyerReport(r) {
   return rpt;
 }
 
+/* ═══════════════════ STRATEGY MEMO ═══════════════════ */
+function buildMemo(r) {
+  const m = [];
+  const title = r.jt || r.rl;
+  const hasOffer = r.off !== null;
+  const offerMo = r.offMo || 0;
+  const gap = hasOffer ? r.cMA - r.off : 0;
+
+  // Block 1: Position summary
+  let pos = "You are " + ((/^[aeiou]/i.test(title) ? "an " : "a ") + title) + ", age " + r.age + ", with " + r.yrs + " years of service in " + (r.industry || "your industry") + " under " + r.pn + " jurisdiction. Your total annual compensation is " + $(r.tc) + (r.bonus > 0 ? " (including " + $(r.bonus) + " in variable pay)" : "") + ".";
+  if (hasOffer) pos += " Your employer has offered " + $(r.off) + ", which represents approximately " + offerMo + " months of compensation.";
+  else pos += " You have not yet received a severance offer, which means you have the advantage of setting the anchor.";
+  pos += " Based on the statutory framework and common law factors, a court would likely award between " + r.cL + " and " + r.cH + " months, with a midpoint of " + r.cM + " months (" + $(r.cMA) + ").";
+  m.push({ t: "Your position", body: pos });
+
+  // Block 2: Leverage points
+  const lev = [];
+  if (r.yrs >= 10) lev.push("Length of service is the single strongest factor in reasonable notice calculations. With " + r.yrs + " years, you are in the upper range. Courts will weigh this heavily in your favour.");
+  else if (r.yrs >= 5) lev.push("Your " + r.yrs + " years of service provides a solid foundation for your claim. This is enough tenure that courts will give it meaningful weight.");
+  if (r.age >= 55) lev.push("At " + r.age + ", courts consistently award longer notice periods because re-employment becomes significantly harder. This is one of your strongest factors. Do not let your employer minimize it.");
+  else if (r.age >= 45) lev.push("At " + r.age + ", you fall in the age range where courts begin to add meaningful weight. The difficulty of finding a comparable role at your level and age works in your favour.");
+  if (r.ind) lev.push("You were recruited away from a stable position. Courts treat this seriously. When an employer induces someone to leave secure employment and then terminates them quickly, the notice period is often significantly higher than the short tenure alone would suggest. Raise this explicitly in your negotiation.");
+  if (r.bf) lev.push("The manner of your termination appears to have fallen below the standard of good faith and fair dealing. Courts have awarded additional damages in cases involving humiliation, dishonesty, or callous conduct during termination. This is separate from the notice period and gives you an additional claim.");
+  if (r.rl === "Management / senior leadership" || r.rl === "Executive / C-suite") lev.push("Your seniority level matters. Courts recognize that senior roles take longer to replace and that comparable positions are scarcer. This pushes the notice period higher than tenure alone would suggest.");
+  if (r.ci && r.ci.m < 1 && r.prov === "ON") lev.push("Your employment contract contains a termination clause, but it was signed in Ontario where the 2020 Waksdale decision has invalidated many such clauses. If the clause fails to comply with ESA minimums in any respect, it may be void entirely, entitling you to common law notice. This is a significant vulnerability for your employer.");
+  if (!r.hasContract) lev.push("You have no written employment contract limiting your termination entitlements. This means you are entitled to common law reasonable notice, which is almost always more generous than statutory minimums.");
+  if (r.newJob === "no") lev.push("You have not yet found new employment. During the reasonable notice period, your employer bears the economic risk if you remain unemployed. This is not a weakness. It means the full notice period applies without any mitigation discount.");
+  if (r.vd > 0) lev.push("You have " + r.vd + " accrued vacation days worth approximately " + $(r.vp) + ". Your employer must pay these out regardless of any severance negotiation. This is a separate entitlement.");
+  if (r.ujd) lev.push("You may have access to an unjust dismissal claim under " + r.ujd.statute + ". This is a separate avenue that can lead to reinstatement or compensation beyond the standard severance calculation. Mention this to your lawyer.");
+  if (lev.length > 0) m.push({ t: "Your leverage points", body: lev.join("\n\n") });
+
+  // Block 3: Risk factors
+  const risk = [];
+  if (r.yrs < 2) risk.push("Your tenure is under 2 years. This limits the baseline range. Courts still award reasonable notice for short-tenure employees, but the months will be lower than someone with 10+ years. If you were induced to leave a prior role, lead with that instead of tenure.");
+  if (r.sr) risk.push("You have already signed a release. This is the most significant risk factor in your situation. A release is a contract where you gave up your right to sue in exchange for the offered severance. However, releases can be set aside in certain circumstances: if you signed under duress, without independent legal advice, without adequate consideration, or if the release does not comply with ESA minimums. Consult a lawyer urgently to assess enforceability.");
+  if (r.newJob === "yes") risk.push("You have already found new employment. This will reduce the effective notice period through mitigation. However, you are still entitled to damages for any gap, and the difference between your old and new compensation may also be recoverable for the balance of the notice period.");
+  if (r.ci && r.ci.m < 1 && r.prov !== "ON") risk.push("Your employment contract contains a termination clause. Outside Ontario, courts are generally more willing to enforce well-drafted termination clauses. A lawyer should review whether the clause meets statutory minimums and is otherwise enforceable.");
+  if (r.nc) risk.push("You are subject to a non-compete or non-solicitation clause. Many such clauses are unenforceable in Canada because they are overly broad in scope, geography, or duration. However, you should have a lawyer review the specific language before assuming you can ignore it. In some cases, the existence of a restrictive covenant can be leveraged in severance negotiations: you can argue for additional compensation in exchange for honouring the restriction.");
+  if (risk.length > 0) m.push({ t: "Risk factors to manage", body: risk.join("\n\n") });
+
+  // Block 4: What your employer will likely do
+  const emp = [];
+  emp.push("Employers follow a predictable playbook in severance negotiations. Knowing what to expect removes the element of surprise and keeps you in control.");
+  if (r.dl) emp.push("Your employer has set a signing deadline" + (r.dlDays ? " of " + r.dlDays + " days" : "") + ". This is a pressure tactic, not a legal requirement. You are not obligated to sign by any arbitrary deadline. If the deadline is under 14 days, say: \"I need adequate time to review this with independent legal advice. I expect the deadline to be extended.\" Most employers will comply because a court would view an unreasonable deadline unfavourably.");
+  else emp.push("Even if no deadline has been set, expect your employer to create urgency. They may say the offer is \"only available for a limited time\" or that it's \"the best they can do.\" Neither is typically true. First offers are opening positions, not final ones.");
+  emp.push("If you counter, your employer may say they need to \"check with HR\" or \"run it up the chain.\" This is standard. Do not interpret a delay as a rejection. It means your counter is being considered.");
+  emp.push("If they threaten to withdraw the offer entirely, do not panic. Withdrawing a severance offer exposes the employer to a wrongful dismissal claim where the court determines the notice period. Most employers know this. The threat is leverage, not action.");
+  m.push({ t: "What to expect from your employer", body: emp.join("\n\n") });
+
+  // Block 5: Your first move
+  const move = [];
+  if (!hasOffer) {
+    move.push("You have not received an offer yet. This is an advantage. The first number in a negotiation sets the anchor, and everything that follows revolves around it.");
+    move.push("Lead with your strongest factors: " + (r.yrs >= 8 ? "your long tenure" : r.age >= 45 ? "your age and the difficulty of re-employment" : r.ind ? "the fact that you were induced to leave stable employment" : "your role level and the time it will take to find a comparable position") + ". State that based on your research into common law entitlements, you expect a severance package in the range of " + r.cM + " to " + r.cH + " months of total compensation.");
+    move.push("Do not explain how you arrived at the number. Simply state it as your expectation. The burden is on the employer to justify why it should be lower.");
+  } else if (r.off < r.esaAmt) {
+    move.push("Your employer's offer is below the statutory minimum. This is non-compliance with " + r.esa + ". You have the strongest possible position.");
+    move.push("Your opening should be direct: \"The offer of " + $(r.off) + " does not meet the minimum requirements under " + r.esa + ". I expect a revised offer that reflects both the statutory entitlements and common law reasonable notice. Based on my circumstances, I believe " + r.cH + " months (" + $(r.cHA) + ") is appropriate.\"");
+    move.push("Do not soften this message. Below-statutory offers indicate either incompetence or bad faith on the employer's part. Either way, you have significant leverage.");
+  } else if (r.off < r.cLA) {
+    move.push("Your employer's offer of " + $(r.off) + " is above the statutory floor but below the range a court would likely award. The gap between the offer and the midpoint is " + $(gap) + ". This is substantial.");
+    move.push("Acknowledge receipt of the offer without accepting it. Then state: \"I have reviewed the offer in light of my entitlements under common law. Considering my tenure, age, role, and the current job market for comparable positions, I believe a package of " + r.cM + " to " + r.cH + " months of total compensation is appropriate. I would like to discuss reaching a fair resolution.\"");
+  } else if (r.off < r.cMA) {
+    move.push("Your employer's offer of " + $(r.off) + " is within the range but below the midpoint. The gap is " + $(gap) + ". You have room to negotiate but your leverage is more moderate.");
+    move.push("Rather than pushing hard on the dollar amount alone, consider a combined approach. Ask for the dollar amount to be increased to the midpoint (" + $(r.cMA) + "), and simultaneously negotiate for: continuation of benefits for the full notice period, pro-rated bonus payment, a positive reference letter with agreed language, and release of any non-compete obligations.");
+  } else {
+    move.push("Your employer's offer is at or near the midpoint of the estimated court range. Pushing significantly higher on the dollar amount may not be realistic unless you have strong aggravating factors.");
+    move.push("Focus your negotiation on non-monetary terms: extended benefits coverage, bonus proration, agreed reference letter language, outplacement services, non-compete release, and the structure of the payment (lump sum vs. salary continuation for tax purposes). These items cost the employer less than cash but can be worth thousands to you.");
+  }
+  m.push({ t: "Your first move", body: move.join("\n\n") });
+
+  // Block 6: What to say and what not to say
+  const say = [];
+  say.push("DO:\n\u2022 Take time. Say \"I need to review this carefully\" and leave the room.\n\u2022 Put everything in writing. Email is better than phone for negotiation.\n\u2022 Reference \"common law entitlements\" and \"reasonable notice.\" These are legal terms that signal you know your rights.\n\u2022 Be professional and factual. Emotion undermines your position.");
+  say.push("DO NOT:\n\u2022 Never say \"I accept\" or \"that sounds reasonable\" in the first meeting.\n\u2022 Never disclose whether you are looking for work or have found a new job. This is mitigation information that can reduce your entitlement.\n\u2022 Never acknowledge that the statutory minimum has been met, even if it has. You are negotiating for common law notice, not the floor.\n\u2022 Never threaten to sue unless you mean it and have a lawyer. Empty threats weaken your position.\n\u2022 Never sign anything on the spot. There is no legal requirement to do so.");
+  if (r.ind) say.push("MENTION SPECIFICALLY: You were recruited away from stable employment. Say: \"I left a secure position at [previous employer] based on representations made during the hiring process. Courts treat induced employees differently and I expect the severance package to reflect that.\"");
+  if (r.bf) say.push("MENTION SPECIFICALLY: The manner of dismissal. Say: \"The way the termination was handled fell below the standard I would expect. I have documented the circumstances and believe this is relevant to the overall discussion.\" Do not elaborate further in the first round. Let them worry about what you documented.");
+  m.push({ t: "What to say and what not to say", body: say.join("\n\n") });
+
+  // Block 7: Timeline
+  let tl = "DAYS 1\u20133: Do not sign anything. Read your termination letter and any release document carefully. Note every clause. Run this analysis.\n\n";
+  tl += "DAYS 3\u20137: Identify your leverage points (listed above). Decide whether to negotiate yourself or hire a lawyer. If the gap between the offer and the midpoint exceeds $25,000, or if you signed a release, a lawyer's involvement likely pays for itself.\n\n";
+  tl += "DAYS 7\u201314: Send your counter-offer in writing. Use the negotiation letter generated by this tool as a starting point, edited in your own voice. Send it by email so there is a paper trail.\n\n";
+  tl += "DAYS 14\u201321: If no response, follow up once: \"I wanted to confirm you received my letter and ask when I can expect a response.\" One follow-up is professional. Multiple follow-ups signal desperation.\n\n";
+  tl += "DAYS 21\u201330: If no resolution, consult an employment lawyer. Most offer a free or low-cost initial consultation. Bring the lawyer report generated by this tool.";
+  if (r.sr) tl = "URGENT: You have signed a release. The timeline below is compressed. Consult an employment lawyer within the next 48 hours to assess enforceability. Bring the signed release, the termination letter, and the lawyer report from this tool.\n\n" + tl;
+  if (r.dl && parseInt(r.dlDays) <= 7) tl = "NOTE: Your signing deadline is " + r.dlDays + " days, which is unusually short. Request an extension immediately before doing anything else. Say: \"I require additional time to review the offer with independent legal counsel.\" Then follow the timeline below.\n\n" + tl;
+  m.push({ t: "Your timeline", body: tl });
+
+  // Block 8: When to hire a lawyer
+  let law = "";
+  if (r.off !== null && r.off < r.esaAmt) law = "Your offer is below the statutory minimum. This is non-compliance. A lawyer can resolve this quickly, often with a single letter, and the outcome should significantly exceed the cost.";
+  else if (r.sr) law = "You signed a release. Whether it can be set aside depends on specific legal analysis. This is not something to navigate alone. A lawyer's assessment is critical and time-sensitive.";
+  else if (r.ujd) law = "You may have an unjust dismissal claim under " + r.ujd.statute + ". This is a specialized area of law with strict procedural requirements and time limits. You need a lawyer who handles these claims specifically.";
+  else if (gap > 50000) law = "The gap between your offer and the court midpoint is " + $(gap) + ". At this level, a lawyer's fee (typically $3,000\u2013$8,000 for a negotiation) is a small fraction of the potential recovery. The ROI is clear.";
+  else if (gap > 20000) law = "The gap between your offer and the court midpoint is " + $(gap) + ". A lawyer's involvement would likely pay for itself. Most employment lawyers offer free initial consultations, so there is no cost to getting an opinion.";
+  else if (!hasOffer) law = "You have not received an offer yet. If the offer, when it comes, is within the range this tool estimates, you can likely handle the first round of negotiation yourself using the letter and guidance above. If it comes in significantly below, consult a lawyer.";
+  else law = "Your offer is within a reasonable range. You can likely negotiate the first round yourself using the letter and guidance above. If the employer refuses to move, or if the process becomes adversarial, a lawyer can step in at that point.";
+  law += "\n\nMost employment lawyers offer a free or low-cost initial consultation (30\u201360 minutes). Bring the lawyer intake report generated by this tool. It saves them time, which saves you money.";
+  m.push({ t: "Do you need a lawyer?", body: law });
+
+  return m;
+}
+
 /* ═══════════════════ RESULTS ═══════════════════ */
 function Res({ res, onReset, dark, setDark }) {
   const [eml, setEml] = useState(false);
@@ -670,6 +774,7 @@ function Res({ res, onReset, dark, setDark }) {
   const [docs, setDocs] = useState(false);
   const [cp, setCp] = useState(null);
   const [fb, setFb] = useState(null);
+  const [memo, setMemo] = useState(false);
   const [printView, setPrintView] = useState(false);
   const bars = useMemo(() => {
     const it = [{ l: "Legal floor", a: res.esaAmt, c: "#D3D1C7", tc: "var(--text-sec)" }, { l: "Court award (low)", a: res.cLA, c: Tl, tc: Td }, { l: "Court award (mid)", a: res.cMA, c: T, tc: T }, { l: "Court award (high)", a: res.cHA, c: Td, tc: Td }];
@@ -687,7 +792,7 @@ function Res({ res, onReset, dark, setDark }) {
   const email = useMemo(() => buildEmail(res), [res]);
   const lawyerRpt = useMemo(() => buildLawyerReport(res), [res]);
   const roi = useMemo(() => { const f = Math.max(3000, Math.round(res.cMA * .08)), u = res.off !== null ? res.cMA - res.off : Math.round(res.cMA * .4); return u - f > 0 ? { f, u, r: Math.round(u / f * 10) / 10 } : null; }, [res]);
-  function copy(t, l) { try { navigator.clipboard.writeText(t); setCp(l); trk("content_copied", { type: l === "e" ? "letter" : l === "lr" ? "lawyer_report" : "summary" }); setTimeout(() => setCp(null), 2000); } catch (e) {} }
+  function copy(t, l) { try { navigator.clipboard.writeText(t); setCp(l); trk("content_copied", { type: l === "e" ? "letter" : l === "lr" ? "lawyer_report" : l === "memo" ? "strategy_memo" : "summary" }); setTimeout(() => setCp(null), 2000); } catch (e) {} }
   const selBens = (res.bens || []).map(id => BENS.find(b => b.id === id)).filter(Boolean);
 
   const pdfRef = useRef(null);
@@ -898,6 +1003,25 @@ function Res({ res, onReset, dark, setDark }) {
         <p style={{ fontSize: 10.5, color: "var(--text-warning)", margin: 0, lineHeight: 1.45 }}><strong>Important:</strong> If you plan to hire a lawyer, share this analysis with them and let them handle the communication. A lawyer will position your case more strategically than a self-sent letter. If you are negotiating on your own, this gives you a strong starting point, but understand that once you put a number on the table, that becomes your anchor.</p>
       </div>
       {eml && <div style={{ marginTop: 8 }}><pre style={{ background: "var(--bg-subtle)", borderRadius: 7, padding: "12px 14px", fontSize: 11, lineHeight: 1.5, color: "var(--text)", whiteSpace: "pre-wrap", wordBreak: "break-word", border: "1px solid var(--border-light)", fontFamily: "Georgia,serif", margin: "0 0 7px" }}>{email.text}</pre><button onClick={() => copy(email.text, "e")} style={{ background: T, color: "#fff", border: "none", borderRadius: 7, padding: "8px", fontSize: 12, fontWeight: 500, cursor: "pointer", width: "100%" }}>{cp === "e" ? "\u2713 Copied" : "Copy to clipboard"}</button></div>}
+    </div></Fade>
+
+    {/* STRATEGY MEMO */}
+    <Fade delay={140}><div style={{ ...CD, border: "2px solid " + T, background: "rgba(10,107,92,.02)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <p style={{ ...SL, color: T, margin: 0 }}>{"\uD83C\uDFAF"} Your strategy memo</p>
+        <button onClick={() => { setMemo(!memo); if (!memo) trk("memo_viewed"); }} style={{ background: "rgba(10,107,92,.08)", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11, color: T, fontWeight: 500, cursor: "pointer" }}>{memo ? "Hide \u25B2" : "Read \u25BC"}</button>
+      </div>
+      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0, lineHeight: 1.4 }}>A personalized guide to your severance negotiation. What to say, what not to say, and when to say it.</p>
+      {memo && (() => { const blocks = buildMemo(res); return <div style={{ marginTop: 12 }}>
+        {blocks.map((b, i) => <div key={i} style={{ marginBottom: 16 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: T, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: ".03em" }}>{b.t}</p>
+          {b.body.split("\n\n").map((para, j) => <p key={j} style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 8px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{para}</p>)}
+        </div>)}
+        <button onClick={() => {
+          const txt = blocks.map(b => b.t.toUpperCase() + "\n\n" + b.body).join("\n\n" + "\u2500".repeat(40) + "\n\n");
+          copy(txt, "memo");
+        }} style={{ background: T, color: "#fff", border: "none", borderRadius: 7, padding: "8px", fontSize: 12, fontWeight: 500, cursor: "pointer", width: "100%" }}>{cp === "memo" ? "\u2713 Copied" : "Copy strategy memo"}</button>
+      </div>; })()}
     </div></Fade>
 
     {/* LAWYER REPORT */}
