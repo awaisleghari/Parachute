@@ -449,7 +449,7 @@ function S3({ d, setD }) {
         <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 5px", lineHeight: 1.4 }}>Look for sections titled "Termination", "Notice", or "Severance" in your contract.</p>
         <Sel on={d.contractTerms === true} onClick={() => setD({ ...d, contractTerms: true })}>Yes, it mentions termination</Sel>
         {d.contractTerms === true && <div style={{ marginLeft: 20, borderLeft: "2px solid var(--border-light)", paddingLeft: 10, marginTop: 3, marginBottom: 6 }}>
-          <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 5px", lineHeight: 1.4 }}>When did you sign this contract?</p>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 5px", lineHeight: 1.4 }}><Whats tip="Older contracts are more likely to be enforceable because the employee had time to understand the terms. Newer contracts, especially in Ontario after the 2020 Waksdale decision, are more frequently struck down by courts for failing to comply with employment standards minimums. The timing helps estimate how much weight to give the termination clause.">When did you sign this contract?</Whats></p>
           <Sel on={d.contractAge === "recent"} onClick={() => setD({ ...d, contractAge: "recent" })}>In the last 3 years</Sel>
           <Sel on={d.contractAge === "old"} onClick={() => setD({ ...d, contractAge: "old" })}>More than 3 years ago</Sel>
           <Sel on={d.contractAge === "unsure"} onClick={() => setD({ ...d, contractAge: "unsure" })}>Not sure</Sel>
@@ -1080,26 +1080,26 @@ function Res({ res, onReset, dark, setDark }) {
 }
 
 /* ═══════════════════ APP ═══════════════════ */
+const EMPTY = { province: "", age: "", years: "", months: "", salary: "", bonus: "", role: "", jobTitle: "", sevElig: false, hasOffer: null, offFmt: "amt", offAmt: "", offWks: "", offMos: "", reason: "", induced: null, hasContract: null, contractTerms: false, contractAge: "", bens: [], industry: "", vacDays: "", signedRelease: null, deadline: null, deadlineDays: "", hasDependents: null, badFaith: null, newJob: "", nonCompete: null };
+function loadSession() { try { const s = sessionStorage.getItem("p_state"); if (s) { const p = JSON.parse(s); return { step: p.step ?? -1, d: { ...EMPTY, ...p.d } }; } } catch {} return null; }
+function saveSession(step, d) { try { sessionStorage.setItem("p_state", JSON.stringify({ step, d })); } catch {} }
+
 export default function App() {
-  const [step, setStep] = useState(-1);
+  const saved = useMemo(() => loadSession(), []);
+  const [step, setStep] = useState(saved ? saved.step : -1);
   const [dark, setDark] = useState(() => window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  const [d, setD] = useState({
-    province: "", age: "", years: "", months: "", salary: "", bonus: "", role: "", jobTitle: "",
-    sevElig: false, hasOffer: null, offFmt: "amt", offAmt: "", offWks: "", offMos: "",
-    reason: "", induced: null, hasContract: null, contractTerms: false, contractAge: "",
-    bens: [], industry: "", vacDays: "",
-    signedRelease: null, deadline: null, deadlineDays: "", hasDependents: null,
-    badFaith: null, newJob: "", nonCompete: null,
-  });
+  const [d, setD] = useState(saved ? saved.d : EMPTY);
   const [res, setRes] = useState(null);
   const [fade, setFade] = useState(false);
+
+  useEffect(() => { if (step >= 1 && step <= 5) saveSession(step, d); }, [step, d]);
 
   function go(s) { setFade(true); setTimeout(() => { if (s === 6) setRes(calc(d)); setStep(s); window.scrollTo(0, 0); setTimeout(() => setFade(false), 25); }, 150); }
 
   const tenure = (parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12;
   const ok = step <= 0 ? true : step === 1 ? !!d.province : step === 2 ? !!(d.age && (d.years || d.months) && d.salary && d.role) : step === 3 ? !!(d.reason && (tenure >= 3 || d.induced !== null) && d.hasContract !== null) : step === 4 ? true : step === 5 ? d.hasOffer !== null && (d.hasOffer === false || !!((d.offFmt === "amt" && d.offAmt) || (d.offFmt === "wks" && d.offWks) || (d.offFmt === "mos" && d.offMos))) : false;
 
-  function reset() { setStep(-1); setRes(null); setD({ province: "", age: "", years: "", months: "", salary: "", bonus: "", role: "", jobTitle: "", sevElig: false, hasOffer: null, offFmt: "amt", offAmt: "", offWks: "", offMos: "", reason: "", induced: null, hasContract: null, contractTerms: false, contractAge: "", bens: [], industry: "", vacDays: "", signedRelease: null, deadline: null, deadlineDays: "", hasDependents: null, badFaith: null, newJob: "", nonCompete: null }); window.scrollTo(0, 0); }
+  function reset() { setStep(-1); setRes(null); setD(EMPTY); try { sessionStorage.removeItem("p_state"); } catch {} window.scrollTo(0, 0); }
 
   if (step === -1) return <><ThemeStyle dark={dark} /><Landing onStart={() => setStep(1)} /></>;
 
