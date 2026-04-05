@@ -39,12 +39,12 @@ const EMP_REASONS = [
 ];
 const INDS = ["Technology", "Finance / Banking", "Legal / Professional", "Healthcare", "Energy / Resources", "Manufacturing", "Retail / Consumer", "Government", "Other"];
 const BENS = [
-  { id: "health", l: "Health / dental", t: "Typically terminates on last day unless extended in severance. Contact insurer within 30 days for guaranteed conversion to individual plan. Check if spouse\u2019s plan can add you." },
-  { id: "pension", l: "Pension / RRSP match", t: "Matching stops immediately. Vested benefits preserved. Request pension statement. Transfer group RRSP/DCPP to personal RRSP or LIRA." },
-  { id: "stock", l: "Stock options / RSUs", t: "Unvested equity typically lapses 30\u201390 days post-termination. Check plan documents immediately. Negotiate accelerated vesting if significant." },
-  { id: "life", l: "Life insurance", t: "Terminates on last day. Most policies offer 30-day conversion without underwriting. Contact insurer." },
-  { id: "disability", l: "Disability", t: "Terminates immediately. Cannot file new LTD claim after last day. If pre-existing condition, file before termination. Consider private coverage." },
-  { id: "car", l: "Car allowance", t: "Stops on termination. Should be included in total compensation for severance calculation." },
+  { id: "health", l: "Health / dental", t: "Typically terminates on last day unless extended in severance. Contact insurer within 30 days for guaranteed conversion to individual plan. Check if spouse\u2019s plan can add you.", et: "Typically terminates on the employee's last day. Standard practice is to continue coverage for the notice period as part of the severance package. Provide the employee with information about conversion to an individual plan within 30 days." },
+  { id: "pension", l: "Pension / RRSP match", t: "Matching stops immediately. Vested benefits preserved. Request pension statement. Transfer group RRSP/DCPP to personal RRSP or LIRA.", et: "Employer matching stops on the last day. Vested benefits are preserved and belong to the employee. Provide a pension statement and facilitate transfer of group RRSP/DCPP to a personal RRSP or LIRA." },
+  { id: "stock", l: "Stock options / RSUs", t: "Unvested equity typically lapses 30\u201390 days post-termination. Check plan documents immediately. Negotiate accelerated vesting if significant.", et: "Unvested equity typically lapses 30\u201390 days post-termination per the plan documents. Consider offering accelerated vesting as part of the severance package, especially for senior employees where equity is a significant part of total compensation." },
+  { id: "life", l: "Life insurance", t: "Terminates on last day. Most policies offer 30-day conversion without underwriting. Contact insurer.", et: "Terminates on the last day. Provide the employee with information about conversion options. Most group policies allow 30-day conversion to an individual plan without underwriting." },
+  { id: "disability", l: "Disability", t: "Terminates immediately. Cannot file new LTD claim after last day. If pre-existing condition, file before termination. Consider private coverage.", et: "Terminates immediately. If the employee has a known disability or pending claim, consult counsel before proceeding. Terminating an employee with a pending LTD claim creates significant human rights exposure." },
+  { id: "car", l: "Car allowance", t: "Stops on termination. Should be included in total compensation for severance calculation.", et: "Stops on the last day. Must be included in total compensation when calculating severance. Failure to include car allowance in the severance calculation can result in an underpayment claim." },
 ];
 function aMod(a) { return a < 35 ? { l: .82, m: .88, h: .92 } : a < 45 ? { l: .92, m: 1, h: 1.05 } : a < 55 ? { l: 1.05, m: 1.15, h: 1.22 } : { l: 1.18, m: 1.3, h: 1.4 }; }
 function cRisk(d) {
@@ -438,15 +438,15 @@ function S2({ d, setD, mode }) {
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 2 of " + TS}</p>
       <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>{E ? "Employee details" : "Employment details"}</h2>
       <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>{E ? "We use these to estimate the exposure." : "We use these to estimate what you're owed."}</p></Fade>
-    <Fade delay={25}><Fld label="Age" type="number" value={d.age} onChange={v => setD({ ...d, age: v })} placeholder="e.g. 42" /></Fade>
-    <Fade delay={40}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>How long you worked there</label><div style={{ display: "flex", gap: 7, marginBottom: 10 }}><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.years} onChange={v => setD({ ...d, years: v })} type="number" placeholder="Years" suffix="yrs" /></div><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.months} onChange={v => setD({ ...d, months: v })} type="number" placeholder="Months" suffix="mo" /></div></div></Fade>
-    <Fade delay={55}><Fld label="Job title" value={d.jobTitle} onChange={v => setD({ ...d, jobTitle: v })} placeholder="e.g. Senior Marketing Manager" /></Fade>
-    <Fade delay={70}><Fld label="Annual base salary" type="number" value={d.salary} onChange={v => setD({ ...d, salary: v })} prefix="$" placeholder="e.g. 95000" suffix="CAD" /></Fade>
-    <Fade delay={85}><Fld label="Annual bonus / commission" type="number" value={d.bonus} onChange={v => setD({ ...d, bonus: v })} prefix="$" placeholder="0" suffix="CAD" help="Average annual variable pay. Enter 0 if none." /></Fade>
-    <Fade delay={95}><Fld label="Unused vacation days" type="number" value={d.vacDays} onChange={v => setD({ ...d, vacDays: v })} placeholder="e.g. 10" suffix="days" help="Your employer must pay these out. This is separate from severance." /></Fade>
-    <Fade delay={110}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>Your level of responsibility</label><p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 0, marginBottom: 7, lineHeight: 1.4 }}>Based on authority, not salary. Courts care about how hard you are to replace.</p>{ROLES.map(r => <Sel key={r.id} on={d.role === r.id} onClick={() => setD({ ...d, role: r.id })} sub={r.d}>{r.l}</Sel>)}</Fade>
+    <Fade delay={25}><Fld label={E ? "Employee's age" : "Age"} type="number" value={d.age} onChange={v => setD({ ...d, age: v })} placeholder="e.g. 42" /></Fade>
+    <Fade delay={40}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>{E ? "Length of employment" : "How long you worked there"}</label><div style={{ display: "flex", gap: 7, marginBottom: 10 }}><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.years} onChange={v => setD({ ...d, years: v })} type="number" placeholder="Years" suffix="yrs" /></div><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.months} onChange={v => setD({ ...d, months: v })} type="number" placeholder="Months" suffix="mo" /></div></div></Fade>
+    <Fade delay={55}><Fld label={E ? "Employee's job title" : "Job title"} value={d.jobTitle} onChange={v => setD({ ...d, jobTitle: v })} placeholder="e.g. Senior Marketing Manager" /></Fade>
+    <Fade delay={70}><Fld label={E ? "Employee's annual base salary" : "Annual base salary"} type="number" value={d.salary} onChange={v => setD({ ...d, salary: v })} prefix="$" placeholder="e.g. 95000" suffix="CAD" /></Fade>
+    <Fade delay={85}><Fld label={E ? "Annual bonus / commission" : "Annual bonus / commission"} type="number" value={d.bonus} onChange={v => setD({ ...d, bonus: v })} prefix="$" placeholder="0" suffix="CAD" help={E ? "Average annual variable pay for this employee. Enter 0 if none." : "Average annual variable pay. Enter 0 if none."} /></Fade>
+    <Fade delay={95}><Fld label={E ? "Accrued vacation days" : "Unused vacation days"} type="number" value={d.vacDays} onChange={v => setD({ ...d, vacDays: v })} placeholder="e.g. 10" suffix="days" help={E ? "These must be paid out regardless of the severance package. This is a separate obligation." : "Your employer must pay these out. This is separate from severance."} /></Fade>
+    <Fade delay={110}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>{E ? "Employee's level of responsibility" : "Your level of responsibility"}</label><p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 0, marginBottom: 7, lineHeight: 1.4 }}>{E ? "Based on authority, not salary. Courts consider how hard the role is to replace." : "Based on authority, not salary. Courts care about how hard you are to replace."}</p>{ROLES.map(r => <Sel key={r.id} on={d.role === r.id} onClick={() => setD({ ...d, role: r.id })} sub={r.d}>{r.l}</Sel>)}</Fade>
     <Fade delay={125}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, marginTop: 6, textTransform: "uppercase", letterSpacing: ".05em" }}>Industry</label><div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>{INDS.map(i => <Pill key={i} on={d.industry === i} onClick={() => setD({ ...d, industry: i })}>{i}</Pill>)}</div></Fade>
-    {d.province === "ON" && <Fade delay={140}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>Ontario: extra severance pay</label><p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 0, marginBottom: 7, lineHeight: 1.4 }}>Ontario is unique. On top of termination pay, you may be owed a separate "severance pay" if your employer's total annual payroll exceeds $2.5 million, or if 50+ employees were let go within 6 months. If you're not sure, select "Not sure" and a lawyer can confirm.</p><Sel on={d.sevElig === true} onClick={() => setD({ ...d, sevElig: true })}>Yes, or I think so</Sel><Sel on={d.sevElig === false} onClick={() => setD({ ...d, sevElig: false })}>No / not sure</Sel></Fade>}
+    {d.province === "ON" && <Fade delay={140}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>Ontario: extra severance pay</label><p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 0, marginBottom: 7, lineHeight: 1.4 }}>{E ? "Ontario requires a separate \"severance pay\" in addition to termination pay if your total annual payroll exceeds $2.5 million, or if 50+ employees were let go within 6 months. This increases your statutory obligations." : "Ontario is unique. On top of termination pay, you may be owed a separate \"severance pay\" if your employer's total annual payroll exceeds $2.5 million, or if 50+ employees were let go within 6 months. If you're not sure, select \"Not sure\" and a lawyer can confirm."}</p><Sel on={d.sevElig === true} onClick={() => setD({ ...d, sevElig: true })}>{E ? "Yes, payroll exceeds $2.5M or 50+ affected" : "Yes, or I think so"}</Sel><Sel on={d.sevElig === false} onClick={() => setD({ ...d, sevElig: false })}>{E ? "No / not sure" : "No / not sure"}</Sel></Fade>}
   </div>;
 }
 
@@ -572,8 +572,6 @@ function S4({ d, setD, mode }) {
     <Fade delay={125}><label style={{ ...QL, marginTop: 10 }}>Employee benefits</label><p style={QH}>Select all that the employee currently receives. Benefits continuation is a standard component of severance packages and affects total cost.</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{BENS.map(b => { const on = (d.bens || []).includes(b.id); return <Pill key={b.id} on={on} onClick={() => { const c = d.bens || []; setD({ ...d, bens: on ? c.filter(x => x !== b.id) : [...c, b.id] }); }}>{b.l}</Pill>; })}</div>
     </Fade>
-
-    <Fade delay={150}><Fld label="Accrued vacation days" type="number" value={d.vacDays} onChange={v => setD({ ...d, vacDays: v })} placeholder="e.g. 10" suffix="days" help="These must be paid out regardless of the severance package." /></Fade>
   </div>;
 
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
@@ -908,18 +906,20 @@ function Res({ res, onReset, dark, setDark, mode }) {
   const [memo, setMemo] = useState(false);
   const [printView, setPrintView] = useState(false);
   const bars = useMemo(() => {
-    const it = [{ l: "Legal floor", a: res.esaAmt, c: "#D3D1C7", tc: "var(--text-sec)" }, { l: "Court award (low)", a: res.cLA, c: Tl, tc: Td }, { l: "Court award (mid)", a: res.cMA, c: T, tc: T }, { l: "Court award (high)", a: res.cHA, c: Td, tc: Td }];
-    if (res.off !== null) { const c = res.off < res.cLA ? "#D85A30" : res.off < res.cMA ? "#BA7517" : T; it.push({ l: "Your offer", a: res.off, c, tc: c }); }
+    const E = mode === "employer";
+    const it = [{ l: E ? "Statutory minimum" : "Legal floor", a: res.esaAmt, c: "#D3D1C7", tc: "var(--text-sec)" }, { l: E ? "Court exposure (low)" : "Court award (low)", a: res.cLA, c: Tl, tc: Td }, { l: E ? "Court exposure (mid)" : "Court award (mid)", a: res.cMA, c: T, tc: T }, { l: E ? "Court exposure (high)" : "Court award (high)", a: res.cHA, c: Td, tc: Td }];
+    if (res.off !== null) { const c = res.off < res.cLA ? "#D85A30" : res.off < res.cMA ? "#BA7517" : T; it.push({ l: E ? "Planned offer" : "Your offer", a: res.off, c, tc: c }); }
     return it;
   }, [res]);
   const asmnt = useMemo(() => {
     if (res.off === null) return null;
-    if (res.off < res.esaAmt) return { l: "Below the legal minimum", c: "#993C1D", bg: "rgba(216,90,48,.07)", d: "This offer is below what the law requires. Strong grounds to push back.", i: "!" };
-    if (res.off < res.cLA) return { l: "Below what courts typically award", c: "#993C1D", bg: "rgba(216,90,48,.07)", d: "Above the legal minimum, but below what a court would likely give you. Significant room to negotiate.", i: "!" };
-    if (res.off < res.cMA) return { l: "In the range, but below midpoint", c: "#854F0B", bg: "rgba(186,117,23,.07)", d: "You're in the ballpark, but there's room to do better.", i: "~" };
-    if (res.off < res.cHA) return { l: "Solid offer", c: T, bg: "rgba(10,107,92,.05)", d: "In the upper range of what courts typically award.", i: "\u2713" };
-    return { l: "Above typical range", c: T, bg: "rgba(10,107,92,.05)", d: "Meets or exceeds what courts would likely award.", i: "\u2713" };
-  }, [res]);
+    const E = mode === "employer";
+    if (res.off < res.esaAmt) return { l: E ? "Below statutory minimum" : "Below the legal minimum", c: "#993C1D", bg: "rgba(216,90,48,.07)", d: E ? "This offer does not meet the legal floor. Presenting it exposes you to an employment standards complaint." : "This offer is below what the law requires. Strong grounds to push back.", i: "!" };
+    if (res.off < res.cLA) return { l: E ? "Below court range" : "Below what courts typically award", c: "#993C1D", bg: "rgba(216,90,48,.07)", d: E ? "Above the statutory floor but below what a court would likely award. High litigation risk at this level." : "Above the legal minimum, but below what a court would likely give you. Significant room to negotiate.", i: "!" };
+    if (res.off < res.cMA) return { l: E ? "Below midpoint" : "In the range, but below midpoint", c: "#854F0B", bg: "rgba(186,117,23,.07)", d: E ? "Within the range but below the midpoint. Moderate litigation risk. Consider increasing to the midpoint." : "You're in the ballpark, but there's room to do better.", i: "~" };
+    if (res.off < res.cHA) return { l: E ? "Defensible offer" : "Solid offer", c: T, bg: "rgba(10,107,92,.05)", d: E ? "At or above the midpoint. Low litigation risk. Most employees would accept this range." : "In the upper range of what courts typically award.", i: "\u2713" };
+    return { l: E ? "Above typical range" : "Above typical range", c: T, bg: "rgba(10,107,92,.05)", d: E ? "Exceeds what courts would likely award. Very low litigation risk." : "Meets or exceeds what courts would likely award.", i: "\u2713" };
+  }, [res, mode]);
   const email = useMemo(() => buildEmail(res), [res]);
   const lawyerRpt = useMemo(() => buildLawyerReport(res), [res]);
   const roi = useMemo(() => { const f = Math.max(3000, Math.round(res.cMA * .08)), u = res.off !== null ? res.cMA - res.off : Math.round(res.cMA * .4); return u - f > 0 ? { f, u, r: Math.round(u / f * 10) / 10 } : null; }, [res]);
@@ -1101,12 +1101,12 @@ function Res({ res, onReset, dark, setDark, mode }) {
       <p style={{ fontSize: 11, color: "var(--text-sec)", margin: 0, lineHeight: 1.5 }}>This analysis shows your potential exposure if the employee challenges the termination. The "court award" figures represent what a court would likely order, not what you must offer. A well-structured package between the statutory floor and the court midpoint typically prevents litigation. Consult employment counsel before finalizing any termination.</p>
     </div></Fade>}
 
-    {res.sr && <Fade delay={20}><div style={{ background: "rgba(216,90,48,.08)", borderRadius: 10, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "var(--text-alert-dark)", lineHeight: 1.45 }}><strong>{"\u26A0"} You signed a release.</strong> Consult a lawyer urgently. Releases can sometimes be set aside.</div></Fade>}
+    {res.sr && mode !== "employer" && <Fade delay={20}><div style={{ background: "rgba(216,90,48,.08)", borderRadius: 10, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "var(--text-alert-dark)", lineHeight: 1.45 }}><strong>{"\u26A0"} You signed a release.</strong> Consult a lawyer urgently. Releases can sometimes be set aside.</div></Fade>}
     {asmnt && <Fade delay={35}><div style={{ background: asmnt.bg, borderRadius: 11, padding: "13px 15px", marginBottom: 10, display: "flex", gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 7, background: asmnt.c, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", fontSize: 14, fontWeight: 700 }}>{asmnt.i}</div><div><p style={{ fontSize: 12.5, fontWeight: 600, color: asmnt.c, margin: "0 0 2px" }}>{asmnt.l}</p><p style={{ fontSize: 11.5, color: "var(--text-sec)", margin: 0, lineHeight: 1.4 }}>{asmnt.d}</p></div></div></Fade>}
 
-    {res.ujd && <Fade delay={40}><div style={{ background: "rgba(10,107,92,.05)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1.5px solid rgba(10,107,92,.2)" }}>
-      <p style={{ fontSize: 12, fontWeight: 600, color: T, margin: "0 0 4px" }}>You may have an unjust dismissal claim</p>
-      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 6px", lineHeight: 1.45 }}>{res.ujd.remedy}</p>
+    {res.ujd && <Fade delay={40}><div style={{ background: mode === "employer" ? "rgba(216,90,48,.06)" : "rgba(10,107,92,.05)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: mode === "employer" ? "1.5px solid rgba(216,90,48,.12)" : "1.5px solid rgba(10,107,92,.2)" }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: mode === "employer" ? "var(--text-alert)" : T, margin: "0 0 4px" }}>{mode === "employer" ? "Unjust dismissal exposure" : "You may have an unjust dismissal claim"}</p>
+      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 6px", lineHeight: 1.45 }}>{mode === "employer" ? "This employee may be eligible for an unjust dismissal complaint under " + res.ujd.statute + ". This is a separate avenue from wrongful dismissal that can result in reinstatement or additional compensation. Ensure you have documented, non-discriminatory reasons for the termination and consult employment counsel about this specific risk before proceeding." : res.ujd.remedy}</p>
       <p style={{ fontSize: 10, color: "var(--text-muted)", margin: 0 }}>Statutory basis: {res.ujd.statute}</p>
     </div></Fade>}
 
@@ -1133,7 +1133,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
 
     {/* SAVE PROMPT */}
     <Fade delay={118}><div style={{ background: "rgba(10,107,92,.04)", borderRadius: 11, padding: "12px 15px", marginBottom: 10, border: "1.5px solid rgba(10,107,92,.15)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-      <div><p style={{ fontSize: 11.5, fontWeight: 600, color: T, margin: "0 0 2px" }}>Save your analysis</p><p style={{ fontSize: 10.5, color: "var(--text-muted)", margin: 0, lineHeight: 1.35 }}>Download a PDF with your full report, verdict, and bar chart.</p></div>
+      <div><p style={{ fontSize: 11.5, fontWeight: 600, color: T, margin: "0 0 2px" }}>Save your analysis</p><p style={{ fontSize: 10.5, color: "var(--text-muted)", margin: 0, lineHeight: 1.35 }}>{mode === "employer" ? "Download a PDF with the exposure analysis, risk flags, and recommended package." : "Download a PDF with your full report, verdict, and bar chart."}</p></div>
       <button onClick={() => { setPrintView(true); window.scrollTo(0, 0); }} style={{ background: T, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 11, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>{"\u2193"} PDF</button>
     </div></Fade>
 
@@ -1370,7 +1370,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
     </div></Fade>
 
     {/* BENEFITS */}
-    {selBens.length > 0 && <Fade delay={175}><div style={{ ...CD, cursor: "pointer" }} onClick={() => setBen(!ben)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ ...SL, margin: 0 }}>{mode === "employer" ? "Benefits continuation obligations" : "What happens to your benefits"}</p><span style={{ fontSize: 10, color: "var(--text-muted)" }}>{ben ? "\u25B2" : "\u25BC"}</span></div>{ben && <div style={{ marginTop: 8 }}>{selBens.map(b => <div key={b.id} style={{ padding: "8px 10px", borderRadius: 7, background: "var(--bg-subtle)", marginBottom: 5 }}><p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-sec)", margin: "0 0 2px" }}>{b.l}</p><p style={{ fontSize: 10, color: "var(--text-muted)", margin: 0, lineHeight: 1.45 }}>{b.t}</p></div>)}</div>}</div></Fade>}
+    {selBens.length > 0 && <Fade delay={175}><div style={{ ...CD, cursor: "pointer" }} onClick={() => setBen(!ben)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ ...SL, margin: 0 }}>{mode === "employer" ? "Benefits continuation obligations" : "What happens to your benefits"}</p><span style={{ fontSize: 10, color: "var(--text-muted)" }}>{ben ? "\u25B2" : "\u25BC"}</span></div>{ben && <div style={{ marginTop: 8 }}>{selBens.map(b => <div key={b.id} style={{ padding: "8px 10px", borderRadius: 7, background: "var(--bg-subtle)", marginBottom: 5 }}><p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-sec)", margin: "0 0 2px" }}>{b.l}</p><p style={{ fontSize: 10, color: "var(--text-muted)", margin: 0, lineHeight: 1.45 }}>{mode === "employer" ? (b.et || b.t) : b.t}</p></div>)}</div>}</div></Fade>}
 
     {/* LAWYER ROI (employee) / COST ANALYSIS (employer) */}
     {mode === "employer" ? <Fade delay={190}><div style={CD}><p style={SL}>Cost of litigation vs. settlement</p>
@@ -1439,24 +1439,46 @@ function Res({ res, onReset, dark, setDark, mode }) {
     <Fade delay={265}><div style={{ display: "flex", gap: 7, marginBottom: 32 }}>
       <Btn secondary onClick={onReset} full>Start over</Btn>
       <Btn onClick={() => {
-        let sm = "MY SEVERANCE ANALYSIS (from Parachute)\n\n";
-        sm += "I worked as " + (res.jt || res.rl) + " in " + res.pn + " for " + res.yrs + " years.\n";
-        sm += "My total annual compensation was " + $(res.tc) + ".\n\n";
-        sm += "THE KEY NUMBERS:\n\n";
-        sm += "\u2022 The legal minimum my employer MUST pay: " + $(res.esaAmt) + " (" + res.totW + " weeks). This is the floor set by law \u2014 anything below this is illegal.\n\n";
-        sm += "\u2022 What a court would likely award: between " + $(res.cLA) + " and " + $(res.cHA) + " (" + res.cL + " to " + res.cH + " months), with a midpoint of " + $(res.cMA) + " (" + res.cM + " months). This is based on my age (" + res.age + "), tenure, role level, and how hard it is to find a similar job.\n\n";
-        if (res.off !== null) {
-          sm += "\u2022 My employer offered me: " + $(res.off) + " (" + res.offMo + " months). ";
-          if (res.off < res.esaAmt) sm += "This is BELOW THE LEGAL MINIMUM. I have strong grounds to push back.\n\n";
-          else if (res.off < res.cLA) sm += "This is above the legal minimum but below what courts typically award. There is significant room to negotiate.\n\n";
-          else if (res.off < res.cMA) sm += "This is in the range but below the midpoint. There may be room for improvement.\n\n";
-          else sm += "This is a solid offer, at or above the midpoint of what courts typically award.\n\n";
+        let sm = "";
+        if (mode === "employer") {
+          sm = "TERMINATION EXPOSURE ANALYSIS (from Parachute)\n\n";
+          sm += "Employee: " + (res.jt || res.rl) + " in " + res.pn + ", " + res.yrs + " years tenure, age " + res.age + ".\n";
+          sm += "Total annual compensation: " + $(res.tc) + ".\n\n";
+          sm += "EXPOSURE RANGE:\n\n";
+          sm += "\u2022 Statutory minimum (non-negotiable): " + $(res.esaAmt) + " (" + res.totW + " weeks). Offering less than this is non-compliant.\n\n";
+          sm += "\u2022 Court exposure range: " + $(res.cLA) + " to " + $(res.cHA) + " (" + res.cL + " to " + res.cH + " months), midpoint " + $(res.cMA) + " (" + res.cM + " months).\n\n";
+          if (res.off !== null) {
+            sm += "\u2022 Planned offer: " + $(res.off) + " (" + res.offMo + " months). ";
+            if (res.off < res.esaAmt) sm += "BELOW STATUTORY MINIMUM. Must be increased.\n\n";
+            else if (res.off < res.cLA) sm += "Below court range. High litigation risk.\n\n";
+            else if (res.off < res.cMA) sm += "Below midpoint. Moderate litigation risk.\n\n";
+            else sm += "At or above midpoint. Low litigation risk.\n\n";
+          }
+          if (res.vd > 0) sm += "\u2022 Vacation payout owed separately: " + $(res.vp) + " (" + res.vd + " days).\n\n";
+          sm += "RECOMMENDED NEXT STEPS:\n";
+          sm += "1. Have employment counsel review the package and release before presenting\n";
+          sm += "2. Prepare all termination documents (termination letter, offer, release, ROE)\n";
+          sm += "3. Conduct the termination meeting professionally and privately\n\n";
+        } else {
+          sm = "MY SEVERANCE ANALYSIS (from Parachute)\n\n";
+          sm += "I worked as " + (res.jt || res.rl) + " in " + res.pn + " for " + res.yrs + " years.\n";
+          sm += "My total annual compensation was " + $(res.tc) + ".\n\n";
+          sm += "THE KEY NUMBERS:\n\n";
+          sm += "\u2022 The legal minimum my employer MUST pay: " + $(res.esaAmt) + " (" + res.totW + " weeks). This is the floor set by law \u2014 anything below this is illegal.\n\n";
+          sm += "\u2022 What a court would likely award: between " + $(res.cLA) + " and " + $(res.cHA) + " (" + res.cL + " to " + res.cH + " months), with a midpoint of " + $(res.cMA) + " (" + res.cM + " months). This is based on my age (" + res.age + "), tenure, role level, and how hard it is to find a similar job.\n\n";
+          if (res.off !== null) {
+            sm += "\u2022 My employer offered me: " + $(res.off) + " (" + res.offMo + " months). ";
+            if (res.off < res.esaAmt) sm += "This is BELOW THE LEGAL MINIMUM. I have strong grounds to push back.\n\n";
+            else if (res.off < res.cLA) sm += "This is above the legal minimum but below what courts typically award. There is significant room to negotiate.\n\n";
+            else if (res.off < res.cMA) sm += "This is in the range but below the midpoint. There may be room for improvement.\n\n";
+            else sm += "This is a solid offer, at or above the midpoint of what courts typically award.\n\n";
+          }
+          if (res.vd > 0) sm += "\u2022 My employer also owes me " + $(res.vp) + " for " + res.vd + " unused vacation days. This is separate from severance.\n\n";
+          sm += "NEXT STEPS:\n";
+          sm += "1. Do NOT sign a release until I have reviewed everything\n";
+          sm += "2. Consider consulting an employment lawyer (most offer free initial consultations)\n";
+          sm += "3. Apply for EI through Service Canada\n\n";
         }
-        if (res.vd > 0) sm += "\u2022 My employer also owes me " + $(res.vp) + " for " + res.vd + " unused vacation days. This is separate from severance.\n\n";
-        sm += "NEXT STEPS:\n";
-        sm += "1. Do NOT sign a release until I have reviewed everything\n";
-        sm += "2. Consider consulting an employment lawyer (most offer free initial consultations)\n";
-        sm += "3. Apply for EI through Service Canada\n\n";
         sm += "This was generated by Parachute (useparachute.ca) for informational purposes only. It is not legal advice.";
         copy(sm, "s");
       }} full>{cp === "s" ? "\u2713 Copied!" : "Copy summary"}</Btn>
