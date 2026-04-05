@@ -26,7 +26,9 @@ const ROLES = [
 ];
 const REASONS = [
   { id: "wc", l: "Without cause", i: "Standard entitlements" }, { id: "re", l: "Restructuring / role eliminated", i: "Standard; may strengthen position" },
-  { id: "cd", l: "Constructive dismissal", i: "Full notice if established" }, { id: "pf", l: "Alleged performance", i: "Heavy burden on employer" }, { id: "un", l: "Not sure / other", i: "Assumes without cause" },
+  { id: "cd", l: "Constructive dismissal", i: "Full notice if established" }, { id: "pf", l: "Alleged performance", i: "Heavy burden on employer" },
+  { id: "fc", l: "Terminated for cause", i: "Employer claims serious misconduct" },
+  { id: "un", l: "Not sure / other", i: "Assumes without cause" },
 ];
 const INDS = ["Technology", "Finance / Banking", "Legal / Professional", "Healthcare", "Energy / Resources", "Manufacturing", "Retail / Consumer", "Government", "Other"];
 const BENS = [
@@ -674,7 +676,18 @@ function buildMemo(r) {
   if (hasOffer) pos += " Your employer has offered " + $(r.off) + ", which represents approximately " + offerMo + " months of compensation.";
   else pos += " You have not yet received a severance offer, which means you have the advantage of setting the anchor.";
   pos += " Based on the statutory framework and common law factors, a court would likely award between " + r.cL + " and " + r.cH + " months, with a midpoint of " + r.cM + " months (" + $(r.cMA) + ").";
+  if (r.reason === "fc") pos += " These figures assume cause is not established, which is the most common outcome when for-cause terminations are challenged.";
   m.push({ t: "Your position", body: pos });
+
+  // Block 1B: For-cause specific guidance
+  if (r.reason === "fc") {
+    let fc = "Your employer is claiming just cause for termination. This is a serious allegation, but it is important to understand what it actually means and how rarely it succeeds.\n\n";
+    fc += "In Canadian law, just cause is the highest standard an employer must meet. It requires the employer to prove that your conduct was so fundamentally incompatible with the employment relationship that no amount of warning, retraining, or progressive discipline could have addressed it. Courts have described it as the \"capital punishment\" of employment law.\n\n";
+    fc += "The burden of proof is entirely on the employer. You do not need to prove your innocence. They need to prove the conduct, that it was serious enough to warrant termination without notice, and that they acted proportionally.\n\n";
+    fc += "There is also an important distinction between common law cause and statutory misconduct. If your employer proves just cause at common law, you lose your entitlement to common law reasonable notice. However, you may still be entitled to statutory termination pay under " + r.esa + " unless the conduct rises to \"willful misconduct, disobedience or willful neglect of duty,\" which is a higher threshold. Many employees who lose the common law argument still receive statutory minimums.\n\n";
+    fc += "What to do immediately:\n\u2022 Do not accept the characterization. Do not sign anything.\n\u2022 Request the employer's written reasons for the for-cause determination in detail.\n\u2022 Gather any documentation that supports your position: emails, performance reviews, communications showing the employer's awareness and tolerance of the conduct.\n\u2022 Consult an employment lawyer as soon as possible. Time limits may apply for filing complaints.";
+    m.push({ t: "Understanding the for-cause claim", body: fc });
+  }
 
   // Block 2: Leverage points
   const lev = [];
@@ -690,6 +703,7 @@ function buildMemo(r) {
   if (r.newJob === "no") lev.push("You have not yet found new employment. During the reasonable notice period, your employer bears the economic risk if you remain unemployed. This is not a weakness. It means the full notice period applies without any mitigation discount.");
   if (r.vd > 0) lev.push("You have " + r.vd + " accrued vacation days worth approximately " + $(r.vp) + ". Your employer must pay these out regardless of any severance negotiation. This is a separate entitlement.");
   if (r.ujd) lev.push("You may have access to an unjust dismissal claim under " + r.ujd.statute + ". This is a separate avenue that can lead to reinstatement or compensation beyond the standard severance calculation. Mention this to your lawyer.");
+  if (r.reason === "fc") lev.push("Your employer bears the entire burden of proving just cause. Canadian courts reject the majority of for-cause claims. If they cannot meet this very high bar, you are entitled to full common law notice as if you had been terminated without cause. This is significant leverage.");
   if (lev.length > 0) m.push({ t: "Your leverage points", body: lev.join("\n\n") });
 
   // Block 3: Risk factors
@@ -712,7 +726,13 @@ function buildMemo(r) {
 
   // Block 5: Your first move
   const move = [];
-  if (!hasOffer) {
+  if (r.reason === "fc") {
+    move.push("Your first move is not to negotiate. It is to protect your position. A for-cause termination is fundamentally different from a standard severance discussion.");
+    move.push("Step 1: Do not respond to the for-cause allegation verbally. Request a detailed written explanation of the grounds for cause. You are entitled to know exactly what conduct they are relying on.");
+    move.push("Step 2: Gather your evidence. Pull together any performance reviews, emails, communications, or records that contradict the employer's characterization. If they are alleging poor performance but you have positive reviews from the last two years, that is your strongest evidence.");
+    move.push("Step 3: Consult an employment lawyer before you say anything further to the employer. A for-cause termination that fails in court entitles you to full common law notice, and potentially additional damages if the for-cause allegation was made in bad faith. Your lawyer will advise whether to challenge the cause determination, negotiate a without-cause package, or pursue litigation.");
+    move.push("Do not accept any severance offer connected to a for-cause termination without legal advice. The amount offered is often far below what you would receive if cause is not established.");
+  } else if (!hasOffer) {
     move.push("You have not received an offer yet. This is an advantage. The first number in a negotiation sets the anchor, and everything that follows revolves around it.");
     move.push("Lead with your strongest factors: " + (r.yrs >= 8 ? "your long tenure" : r.age >= 45 ? "your age and the difficulty of re-employment" : r.ind ? "the fact that you were induced to leave stable employment" : "your role level and the time it will take to find a comparable position") + ". State that based on your research into common law entitlements, you expect a severance package in the range of " + r.cM + " to " + r.cH + " months of total compensation.");
     move.push("Do not explain how you arrived at the number. Simply state it as your expectation. The burden is on the employer to justify why it should be lower.");
@@ -738,6 +758,7 @@ function buildMemo(r) {
   say.push("DO NOT:\n\u2022 Never say \"I accept\" or \"that sounds reasonable\" in the first meeting.\n\u2022 Never disclose whether you are looking for work or have found a new job. This is mitigation information that can reduce your entitlement.\n\u2022 Never acknowledge that the statutory minimum has been met, even if it has. You are negotiating for common law notice, not the floor.\n\u2022 Never threaten to sue unless you mean it and have a lawyer. Empty threats weaken your position.\n\u2022 Never sign anything on the spot. There is no legal requirement to do so.");
   if (r.ind) say.push("MENTION SPECIFICALLY: You were recruited away from stable employment. Say: \"I left a secure position at [previous employer] based on representations made during the hiring process. Courts treat induced employees differently and I expect the severance package to reflect that.\"");
   if (r.bf) say.push("MENTION SPECIFICALLY: The manner of dismissal. Say: \"The way the termination was handled fell below the standard I would expect. I have documented the circumstances and believe this is relevant to the overall discussion.\" Do not elaborate further in the first round. Let them worry about what you documented.");
+  if (r.reason === "fc") say.push("FOR-CAUSE SPECIFIC:\n\u2022 Do not admit to or apologize for the alleged conduct, even informally.\n\u2022 Do not discuss the details of the allegation with colleagues. What you say to coworkers can be used as evidence.\n\u2022 If the employer asks you to attend an \"investigation meeting,\" you have the right to bring a representative or ask for questions in writing.\n\u2022 Preserve all documents, emails, and communications. Do not delete anything from your work accounts if you still have access.");
   m.push({ t: "What to say and what not to say", body: say.join("\n\n") });
 
   // Block 7: Timeline
@@ -752,7 +773,8 @@ function buildMemo(r) {
 
   // Block 8: When to hire a lawyer
   let law = "";
-  if (r.off !== null && r.off < r.esaAmt) law = "Your offer is below the statutory minimum. This is non-compliance. A lawyer can resolve this quickly, often with a single letter, and the outcome should significantly exceed the cost.";
+  if (r.reason === "fc") law = "Yes. A for-cause termination is one of the most consequential situations in employment law. Your employer is attempting to avoid paying any severance by alleging serious misconduct. You need a lawyer who specializes in wrongful dismissal to assess the strength of the employer's claim, advise on whether to challenge it, and determine the full range of your entitlements if cause is not established. Do not attempt to negotiate a for-cause termination on your own.";
+  else if (r.off !== null && r.off < r.esaAmt) law = "Your offer is below the statutory minimum. This is non-compliance. A lawyer can resolve this quickly, often with a single letter, and the outcome should significantly exceed the cost.";
   else if (r.sr) law = "You signed a release. Whether it can be set aside depends on specific legal analysis. This is not something to navigate alone. A lawyer's assessment is critical and time-sensitive.";
   else if (r.ujd) law = "You may have an unjust dismissal claim under " + r.ujd.statute + ". This is a specialized area of law with strict procedural requirements and time limits. You need a lawyer who handles these claims specifically.";
   else if (gap > 50000) law = "The gap between your offer and the court midpoint is " + $(gap) + ". At this level, a lawyer's fee (typically $3,000\u2013$8,000 for a negotiation) is a small fraction of the potential recovery. The ROI is clear.";
@@ -974,6 +996,13 @@ function Res({ res, onReset, dark, setDark }) {
       <p style={{ fontSize: 10, color: "var(--text-muted)", margin: 0 }}>Statutory basis: {res.ujd.statute}</p>
     </div></Fade>}
 
+    {res.reason === "fc" && <Fade delay={42}><div style={{ background: "var(--bg-alert)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1.5px solid rgba(216,90,48,.15)" }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-alert)", margin: "0 0 5px" }}>Your employer claims termination for cause</p>
+      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 6px", lineHeight: 1.5 }}>This is an allegation, not a ruling. The burden of proof is on your employer, and Canadian courts set an extremely high bar for just cause. Most for-cause terminations do not hold up. The numbers below show what you would be owed if cause is not established, which is the most likely outcome.</p>
+      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 4px", lineHeight: 1.5 }}>Even if the employer can prove just cause at common law, you may still be entitled to statutory minimums unless the conduct rises to "willful misconduct, disobedience or willful neglect of duty," which is a higher bar.</p>
+      <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-alert)", margin: 0 }}>Consult an employment lawyer immediately. Time limits for responding may apply.</p>
+    </div></Fade>}
+
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 10 }}>
       <MC l={"Legal floor"} v={$(res.esaAmt)} s={<Whats tip="Every province sets a bare minimum your employer must pay. This is the absolute floor \u2014 your employer cannot legally offer less than this.">{res.totW + " weeks (statutory minimum)"}</Whats>} delay={55} />
       <MC l={"What a court would likely award"} v={$(res.cMA)} s={<Whats tip="When courts decide severance cases, they consider your age, how long you worked there, your role, and how easy it is to find a similar job. This is called 'common law reasonable notice'. It's almost always higher than the statutory minimum.">{res.cM + " months (common law mid)"}</Whats>} a delay={70} />
@@ -1013,6 +1042,9 @@ function Res({ res, onReset, dark, setDark }) {
       </div>
       <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0, lineHeight: 1.4 }}>A personalized guide to your severance negotiation. What to say, what not to say, and when to say it.</p>
       {memo && (() => { const blocks = buildMemo(res); return <div style={{ marginTop: 12 }}>
+        <div style={{ background: "var(--bg-warning)", borderRadius: 8, padding: "10px 12px", marginBottom: 14, border: "1px solid var(--border-warning)" }}>
+          <p style={{ fontSize: 10.5, color: "var(--text-warning)", margin: 0, lineHeight: 1.5 }}>This memo is generated from the information you provided and is for informational purposes only. It is not legal advice, does not create a solicitor-client relationship, and should not be relied upon as a substitute for independent legal counsel. A qualified employment lawyer may assess your situation differently.</p>
+        </div>
         {blocks.map((b, i) => <div key={i} style={{ marginBottom: 16 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: T, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: ".03em" }}>{b.t}</p>
           {b.body.split("\n\n").map((para, j) => <p key={j} style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 8px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{para}</p>)}
