@@ -30,6 +30,13 @@ const REASONS = [
   { id: "fc", l: "Terminated for cause", i: "Employer claims serious misconduct" },
   { id: "un", l: "Not sure / other", i: "Assumes without cause" },
 ];
+const EMP_REASONS = [
+  { id: "re", l: "Position elimination / restructuring", i: "Standard severance obligations apply" },
+  { id: "wc", l: "Without cause (no specific reason)", i: "Standard severance obligations apply" },
+  { id: "pf", l: "Performance issues", i: "Cause rarely established; plan for full severance" },
+  { id: "fc", l: "For cause (serious misconduct)", i: "Very high burden of proof on you" },
+  { id: "pr", l: "End of probation", i: "Reduced obligations in most provinces" },
+];
 const INDS = ["Technology", "Finance / Banking", "Legal / Professional", "Healthcare", "Energy / Resources", "Manufacturing", "Retail / Consumer", "Government", "Other"];
 const BENS = [
   { id: "health", l: "Health / dental", t: "Typically terminates on last day unless extended in severance. Contact insurer within 30 days for guaranteed conversion to individual plan. Check if spouse\u2019s plan can add you." },
@@ -63,7 +70,7 @@ function calc(d) {
   if (d.province === "FED" && yrs >= 1) ujd = { statute: "Canada Labour Code, s. 240", threshold: "12 months", remedy: "Federally regulated employees with 12+ months of continuous service can file an unjust dismissal complaint. Remedies may include reinstatement to the position and compensation for lost wages. This is a separate avenue from the severance entitlements above and may be more favourable. Strict time limits apply. Consult a lawyer promptly." };
   if (d.province === "QC" && yrs >= 2) ujd = { statute: "Act respecting labour standards, s. 124", threshold: "2 years", remedy: "Quebec employees with 2+ years of continuous service who believe they were dismissed without good and sufficient cause can file a complaint. Remedies may include reinstatement and compensation. Note that Quebec operates under civil law, and common law reasonable notice principles may apply differently. Consult a lawyer familiar with Quebec employment law." };
   if (d.province === "NS" && yrs >= 10) ujd = { statute: "Labour Standards Code, s. 71", threshold: "10 years", remedy: "Nova Scotia employees with 10+ years of continuous service have access to an unjust dismissal provision. Remedies may include reinstatement or compensation. This is in addition to your standard termination entitlements. Consult a lawyer to assess whether this applies to your situation." };
-  return { pn: p.n, esa: p.esa, tw, sw, totW, esaAmt: Math.round(totW * wk), wk: Math.round(wk), cL: Math.round(cL * 10) / 10, cM: Math.round(cM * 10) / 10, cH: Math.round(cH * 10) / 10, cLA: Math.round(cL * mo), cMA: Math.round(cM * mo), cHA: Math.round(cH * mo), off, offMo: off !== null && mo > 0 ? Math.round(off / mo * 10) / 10 : null, mo: Math.round(mo), hs: p.hs, sn: p.sn, kc: p.kc, sal: s, bonus: b, tc, yrs: Math.round(yrs * 10) / 10, age: a, rl: r.l, ind: d.induced && yrs < 3, indPct, ci, reason: d.reason, bens: d.bens || [], jt: d.jobTitle, industry: d.industry, sr: d.signedRelease, dl: d.deadline, dlDays: d.deadlineDays, prov: d.province, vd, vp: Math.round(vd * (s / 260)), bf: d.badFaith, newJob: d.newJob, nc: d.nonCompete, hasContract: d.hasContract, contractAge: d.contractAge, tr: !!p.tr, ujd };
+  return { pn: p.n, esa: p.esa, tw, sw, totW, esaAmt: Math.round(totW * wk), wk: Math.round(wk), cL: Math.round(cL * 10) / 10, cM: Math.round(cM * 10) / 10, cH: Math.round(cH * 10) / 10, cLA: Math.round(cL * mo), cMA: Math.round(cM * mo), cHA: Math.round(cH * mo), off, offMo: off !== null && mo > 0 ? Math.round(off / mo * 10) / 10 : null, mo: Math.round(mo), hs: p.hs, sn: p.sn, kc: p.kc, sal: s, bonus: b, tc, yrs: Math.round(yrs * 10) / 10, age: a, rl: r.l, ind: d.induced && yrs < 3, indPct, ci, reason: d.reason, bens: d.bens || [], jt: d.jobTitle, industry: d.industry, sr: d.signedRelease, dl: d.deadline, dlDays: d.deadlineDays, prov: d.province, vd, vp: Math.round(vd * (s / 260)), bf: d.badFaith, newJob: d.newJob, nc: d.nonCompete, hasContract: d.hasContract, contractAge: d.contractAge, tr: !!p.tr, ujd, empDocLevel: d.empDocLevel, empHR: d.empHumanRights, empGroup: d.empGroupTerm, empTermStatus: d.empTermStatus };
 }
 const $ = n => new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
 const T = "#0A6B5C", Td = "#085041", Tl = "#9FE1CB";
@@ -447,15 +454,65 @@ function S3({ d, setD, mode }) {
   const E = mode === "employer";
   const QL = { display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" };
   const QH = { fontSize: 11, color: "var(--text-muted)", marginTop: 0, marginBottom: 7, lineHeight: 1.4 };
+  const tenure = (parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12;
+
+  if (E) return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
+    <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 3 of " + TS}</p>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>The termination</h2>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>These details directly affect your legal exposure and the package you should offer.</p></Fade>
+
+    <Fade delay={25}><label style={QL}>Reason for termination</label><p style={QH}>Select the primary reason. This determines the legal framework that applies.</p>{EMP_REASONS.map(r => <Sel key={r.id} on={d.reason === r.id} onClick={() => setD({ ...d, reason: r.id })} sub={r.i}>{r.l}</Sel>)}</Fade>
+
+    {d.reason === "fc" && <Fade delay={35}><div style={{ background: "rgba(216,90,48,.06)", borderRadius: 10, padding: "11px 14px", marginTop: 6, marginBottom: 6, border: "1px solid rgba(216,90,48,.1)" }}>
+      <p style={{ fontSize: 11, color: "var(--text-alert)", margin: 0, lineHeight: 1.5 }}>For-cause terminations are the most litigated and most frequently overturned. Courts require you to prove misconduct so serious that the employment relationship cannot continue. Budget for full common law notice in case cause is not established.</p>
+    </div></Fade>}
+
+    {tenure < 3 && <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>Was this employee recruited from another position?</label><p style={QH}>If you recruited this employee away from stable employment and are terminating within 3 years, courts treat this as a significant aggravating factor. The notice period will be substantially higher than short tenure alone would suggest.</p><Sel on={d.induced === true} onClick={() => setD({ ...d, induced: true })}>Yes, we recruited them from another role</Sel><Sel on={d.induced === false} onClick={() => setD({ ...d, induced: false })}>No, they applied independently</Sel></Fade>}
+
+    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>Employment contract</label><p style={QH}>Does the employee have a written contract with a termination clause? This determines whether you can limit severance to the contractual amount or must pay full common law notice.</p>
+      <Sel on={d.hasContract === true} onClick={() => setD({ ...d, hasContract: true, contractTerms: false, contractAge: "" })}>Yes, there is a written contract</Sel>
+      {d.hasContract === true && <div style={{ marginLeft: 24, borderLeft: "2px solid " + Tl, paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>
+        <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 5px", lineHeight: 1.4 }}>Does it contain a termination or severance provision?</p>
+        <Sel on={d.contractTerms === true} onClick={() => setD({ ...d, contractTerms: true })}>Yes, it limits termination entitlements</Sel>
+        {d.contractTerms === true && <div style={{ marginLeft: 20, borderLeft: "2px solid var(--border-light)", paddingLeft: 10, marginTop: 3, marginBottom: 6 }}>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 5px", lineHeight: 1.4 }}><Whats tip="In Ontario, the 2020 Waksdale decision invalidated many termination clauses. If any part of the clause fails to comply with ESA minimums, the entire clause may be void. Newer contracts are more vulnerable. Have your employment lawyer review the specific language before relying on it.">When was this contract signed?</Whats></p>
+          <Sel on={d.contractAge === "recent"} onClick={() => setD({ ...d, contractAge: "recent" })}>In the last 3 years</Sel>
+          <Sel on={d.contractAge === "old"} onClick={() => setD({ ...d, contractAge: "old" })}>More than 3 years ago</Sel>
+          <Sel on={d.contractAge === "unsure"} onClick={() => setD({ ...d, contractAge: "unsure" })}>Not sure</Sel>
+        </div>}
+        <Sel on={d.contractTerms === false} onClick={() => setD({ ...d, contractTerms: false, contractAge: "" })}>No termination clause / not sure</Sel>
+      </div>}
+      <Sel on={d.hasContract === false} onClick={() => setD({ ...d, hasContract: false, contractTerms: false, contractAge: "" })}>No written contract</Sel>
+      {d.hasContract === false && <div style={{ background: "rgba(216,90,48,.06)", borderRadius: 8, padding: "8px 12px", marginTop: 4, border: "1px solid rgba(216,90,48,.08)" }}>
+        <p style={{ fontSize: 10.5, color: "var(--text-sec)", margin: 0, lineHeight: 1.4 }}>Without a written contract, the employee is entitled to full common law reasonable notice. This is almost always significantly more than statutory minimums.</p>
+      </div>}
+    </Fade>
+
+    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>Has the termination already occurred?</label><p style={QH}>This helps us tailor the guidance. If you haven't terminated yet, we can help you avoid common mistakes.</p>
+      <Sel on={d.empTermStatus === "completed"} onClick={() => setD({ ...d, empTermStatus: "completed" })}>Yes, already terminated</Sel>
+      <Sel on={d.empTermStatus === "planned"} onClick={() => setD({ ...d, empTermStatus: "planned" })}>Not yet, planning it</Sel>
+    </Fade>
+
+    {d.empTermStatus === "completed" && <Fade delay={110}><label style={{ ...QL, marginTop: 10 }}>Was there anything problematic about how it was handled?</label><p style={QH}>Public escort, announcement before private meeting, misleading statements, refusal to let them collect belongings, or any conduct the employee could perceive as humiliating. Be honest — this significantly affects your exposure.</p>
+      <Sel on={d.badFaith === true} onClick={() => setD({ ...d, badFaith: true })}>Yes, there may have been issues</Sel>
+      <Sel on={d.badFaith === false} onClick={() => setD({ ...d, badFaith: false })}>No, it was handled professionally</Sel>
+    </Fade>}
+
+    {d.empTermStatus === "planned" && <Fade delay={110}><div style={{ background: "rgba(10,107,92,.04)", borderRadius: 10, padding: "11px 14px", marginTop: 6, border: "1px solid rgba(10,107,92,.1)" }}>
+      <p style={{ fontSize: 11, color: T, fontWeight: 600, margin: "0 0 3px" }}>Good. We'll include best practices for the meeting.</p>
+      <p style={{ fontSize: 10.5, color: "var(--text-sec)", margin: 0, lineHeight: 1.4 }}>How you handle the termination matters as much as what you offer. Courts award additional damages for bad faith conduct during the process.</p>
+    </div></Fade>}
+  </div>;
+
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 3 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>{E ? "The termination" : "Your termination"}</h2>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>{E ? "These details affect the exposure." : "These details affect how much you may be owed."}</p></Fade>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your termination</h2>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>These details affect how much you may be owed.</p></Fade>
 
-    <Fade delay={25}><label style={QL}>{E ? "Reason for termination" : "Why were you let go?"}</label>{REASONS.map(r => <Sel key={r.id} on={d.reason === r.id} onClick={() => setD({ ...d, reason: r.id })} sub={r.i}>{r.l}</Sel>)}</Fade>
-    {((parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12) < 3 && <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>{E ? "Was this employee recruited from another position?" : "Did they recruit you away from a previous job?"}</label><p style={QH}>{E ? "If you recruited this employee away from a stable position and are now terminating them within 3 years, courts may award significantly more." : "Since you were there under 3 years, this matters. If they convinced you to leave a stable position and then let you go quickly, courts often award significantly more than your short tenure alone would suggest."}</p><Sel on={d.induced === true} onClick={() => setD({ ...d, induced: true })}>{E ? "Yes, we recruited them" : "Yes, I was recruited away"}</Sel><Sel on={d.induced === false} onClick={() => setD({ ...d, induced: false })}>No</Sel></Fade>}
+    <Fade delay={25}><label style={QL}>Why were you let go?</label>{REASONS.map(r => <Sel key={r.id} on={d.reason === r.id} onClick={() => setD({ ...d, reason: r.id })} sub={r.i}>{r.l}</Sel>)}</Fade>
+    {tenure < 3 && <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>Did they recruit you away from a previous job?</label><p style={QH}>Since you were there under 3 years, this matters. If they convinced you to leave a stable position and then let you go quickly, courts often award significantly more than your short tenure alone would suggest.</p><Sel on={d.induced === true} onClick={() => setD({ ...d, induced: true })}>Yes, I was recruited away</Sel><Sel on={d.induced === false} onClick={() => setD({ ...d, induced: false })}>No</Sel></Fade>}
 
-    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>{E ? "Employment contract" : "Your employment contract"}</label><p style={QH}>{E ? "Does the employee have a written contract with a termination clause?" : "Many contracts try to limit what you get. Courts throw them out more often than you'd expect."}</p>
+    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>Your employment contract</label><p style={QH}>Many contracts try to limit what you get. Courts throw them out more often than you'd expect.</p>
       <Sel on={d.hasContract === true} onClick={() => setD({ ...d, hasContract: true, contractTerms: false, contractAge: "" })}>I signed a written contract or offer letter</Sel>
       {d.hasContract === true && <div style={{ marginLeft: 24, borderLeft: "2px solid " + Tl, paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>
         <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 5px", lineHeight: 1.4 }}>Look for sections titled "Termination", "Notice", or "Severance" in your contract.</p>
@@ -471,7 +528,7 @@ function S3({ d, setD, mode }) {
       <Sel on={d.hasContract === false} onClick={() => setD({ ...d, hasContract: false, contractTerms: false, contractAge: "" })}>No written contract / not sure</Sel>
     </Fade>
 
-    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>{E ? "Was there any misconduct in how the termination was handled?" : "Was the termination handled badly?"}</label><p style={QH}>{E ? "Escorting out publicly, making false accusations, announcing the termination to others first. Courts award extra damages for bad faith conduct." : "Escorted out, humiliated, lied to, or announced to others before you were told. Courts can award extra damages."}</p><Sel on={d.badFaith === true} onClick={() => setD({ ...d, badFaith: true })}>Yes</Sel><Sel on={d.badFaith === false} onClick={() => setD({ ...d, badFaith: false })}>{E ? "No / handled professionally" : "No / reasonably handled"}</Sel></Fade>
+    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>Was the termination handled badly?</label><p style={QH}>Escorted out, humiliated, lied to, or announced to others before you were told. Courts can award extra damages.</p><Sel on={d.badFaith === true} onClick={() => setD({ ...d, badFaith: true })}>Yes</Sel><Sel on={d.badFaith === false} onClick={() => setD({ ...d, badFaith: false })}>No / reasonably handled</Sel></Fade>
   </div>;
 }
 
@@ -479,18 +536,58 @@ function S4({ d, setD, mode }) {
   const E = mode === "employer";
   const QL = { display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" };
   const QH = { fontSize: 11, color: "var(--text-muted)", marginTop: 0, marginBottom: 7, lineHeight: 1.4 };
+
+  if (E) return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
+    <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 4 of " + TS}</p>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Risk factors & compliance</h2>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>These details affect your legal risk and how we structure the guidance.</p></Fade>
+
+    {(d.reason === "pf" || d.reason === "fc") && <Fade delay={25}><label style={QL}>Level of documentation</label><p style={QH}>For performance or cause-based terminations, documentation is critical. Courts examine whether the employee was given clear expectations, warnings, and an opportunity to improve.</p>
+      <Sel on={d.empDocLevel === "pip"} onClick={() => setD({ ...d, empDocLevel: "pip" })} sub="Strongest position">Formal PIP with written outcomes</Sel>
+      <Sel on={d.empDocLevel === "written"} onClick={() => setD({ ...d, empDocLevel: "written" })} sub="Helpful but may not be sufficient for cause">Written warnings on file</Sel>
+      <Sel on={d.empDocLevel === "verbal"} onClick={() => setD({ ...d, empDocLevel: "verbal" })} sub="Difficult to prove in court">Verbal warnings only</Sel>
+      <Sel on={d.empDocLevel === "none"} onClick={() => setD({ ...d, empDocLevel: "none" })} sub="Very high risk if claiming cause">No formal documentation</Sel>
+    </Fade>}
+
+    <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>Are there any human rights considerations?</label><p style={QH}>Terminating an employee who is pregnant, on disability leave, has a disability, recently filed a complaint, or is a member of a protected class significantly increases legal risk. Be honest, as this changes the analysis substantially.</p>
+      <Sel on={d.empHumanRights === true} onClick={() => setD({ ...d, empHumanRights: true })} sub="Increases exposure and complexity">Yes, there may be human rights factors</Sel>
+      <Sel on={d.empHumanRights === false} onClick={() => setD({ ...d, empHumanRights: false })}>No</Sel>
+    </Fade>
+
+    {d.empHumanRights === true && <Fade delay={55}><div style={{ background: "rgba(216,90,48,.06)", borderRadius: 10, padding: "11px 14px", marginBottom: 8, border: "1px solid rgba(216,90,48,.1)" }}>
+      <p style={{ fontSize: 11, color: "var(--text-alert)", fontWeight: 600, margin: "0 0 3px" }}>This is a high-risk termination.</p>
+      <p style={{ fontSize: 10.5, color: "var(--text-sec)", margin: 0, lineHeight: 1.4 }}>Terminations involving human rights factors (disability, pregnancy, age discrimination, reprisal for complaints) can result in human rights tribunal complaints with uncapped general damages, in addition to wrongful dismissal claims. Consult employment counsel before proceeding.</p>
+    </div></Fade>}
+
+    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>Is this part of a group termination?</label><p style={QH}>In Ontario, terminating 50+ employees in a 4-week period triggers mass termination provisions with longer notice requirements. Other provinces have similar thresholds.</p>
+      <Sel on={d.empGroupTerm === true} onClick={() => setD({ ...d, empGroupTerm: true })} sub="Additional statutory requirements may apply">Yes, multiple employees affected</Sel>
+      <Sel on={d.empGroupTerm === false} onClick={() => setD({ ...d, empGroupTerm: false })}>No, individual termination</Sel>
+    </Fade>
+
+    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>Non-compete or non-solicitation clause?</label><p style={QH}>If the employee has a restrictive covenant, it can be used as a negotiation tool. Many are unenforceable in Canada, but they still have value in structuring a clean exit.</p>
+      <Sel on={d.nonCompete === true} onClick={() => setD({ ...d, nonCompete: true })}>Yes, there is a restrictive covenant</Sel>
+      <Sel on={d.nonCompete === false} onClick={() => setD({ ...d, nonCompete: false })}>No</Sel>
+    </Fade>
+
+    <Fade delay={125}><label style={{ ...QL, marginTop: 10 }}>Employee benefits</label><p style={QH}>Select all that the employee currently receives. Benefits continuation is a standard component of severance packages and affects total cost.</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{BENS.map(b => { const on = (d.bens || []).includes(b.id); return <Pill key={b.id} on={on} onClick={() => { const c = d.bens || []; setD({ ...d, bens: on ? c.filter(x => x !== b.id) : [...c, b.id] }); }}>{b.l}</Pill>; })}</div>
+    </Fade>
+
+    <Fade delay={150}><Fld label="Accrued vacation days" type="number" value={d.vacDays} onChange={v => setD({ ...d, vacDays: v })} placeholder="e.g. 10" suffix="days" help="These must be paid out regardless of the severance package." /></Fade>
+  </div>;
+
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 4 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>{E ? "The situation" : "Your situation"}</h2>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>{E ? "A few more details that affect the exposure." : "A few more details that affect your position."}</p></Fade>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your situation</h2>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>A few more details that affect your position.</p></Fade>
 
-    <Fade delay={25}><label style={QL}>{E ? "Has the employee signed a release?" : "Have you signed a release?"}</label><p style={QH}>{E ? "A release is where the employee gives up their right to sue in exchange for the severance." : "A release is where you give up your right to sue in exchange for the severance. This is critical."}</p><Sel on={d.signedRelease === true} onClick={() => setD({ ...d, signedRelease: true })} sub={E ? "Review enforceability with counsel" : "May limit options, but can sometimes be undone"}>Already signed</Sel><Sel on={d.signedRelease === false} onClick={() => setD({ ...d, signedRelease: false })}>Not yet</Sel></Fade>
+    <Fade delay={25}><label style={QL}>Have you signed a release?</label><p style={QH}>A release is where you give up your right to sue in exchange for the severance. This is critical.</p><Sel on={d.signedRelease === true} onClick={() => setD({ ...d, signedRelease: true })} sub="May limit options, but can sometimes be undone">Already signed</Sel><Sel on={d.signedRelease === false} onClick={() => setD({ ...d, signedRelease: false })}>Not yet</Sel></Fade>
 
-    <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>{E ? "Has the employee found new work?" : "Have you found new work?"}</label><Sel on={d.newJob === "yes"} onClick={() => setD({ ...d, newJob: "yes" })} sub={E ? "Reduces your exposure through mitigation" : "Reduces notice, but you're still owed the difference"}>Yes</Sel><Sel on={d.newJob === "looking"} onClick={() => setD({ ...d, newJob: "looking" })}>Actively looking</Sel><Sel on={d.newJob === "no"} onClick={() => setD({ ...d, newJob: "no" })}>Not yet</Sel></Fade>
+    <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>Have you found new work?</label><Sel on={d.newJob === "yes"} onClick={() => setD({ ...d, newJob: "yes" })} sub="Reduces notice, but you're still owed the difference">Yes</Sel><Sel on={d.newJob === "looking"} onClick={() => setD({ ...d, newJob: "looking" })}>Actively looking</Sel><Sel on={d.newJob === "no"} onClick={() => setD({ ...d, newJob: "no" })}>Not yet</Sel></Fade>
 
-    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>{E ? "Non-compete or non-solicit clause?" : "Non-compete or non-solicit clause?"}</label><Sel on={d.nonCompete === true} onClick={() => setD({ ...d, nonCompete: true })} sub={E ? "Many are unenforceable in Canada. Review with counsel." : "Many are unenforceable in Canada"}>Yes</Sel><Sel on={d.nonCompete === false} onClick={() => setD({ ...d, nonCompete: false })}>No / not sure</Sel></Fade>
+    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>Non-compete or non-solicit clause?</label><Sel on={d.nonCompete === true} onClick={() => setD({ ...d, nonCompete: true })} sub="Many are unenforceable in Canada">Yes</Sel><Sel on={d.nonCompete === false} onClick={() => setD({ ...d, nonCompete: false })}>No / not sure</Sel></Fade>
 
-    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>{E ? "Employee benefits" : "Benefits while employed"}</label><p style={QH}>{E ? "Select all that apply. These affect total exposure and negotiation scope." : "Select all that apply. We'll explain what happens to each one."}</p><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{BENS.map(b => { const on = (d.bens || []).includes(b.id); return <Pill key={b.id} on={on} onClick={() => { const c = d.bens || []; setD({ ...d, bens: on ? c.filter(x => x !== b.id) : [...c, b.id] }); }}>{b.l}</Pill>; })}</div></Fade>
+    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>Benefits while employed</label><p style={QH}>Select all that apply. We'll explain what happens to each one.</p><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{BENS.map(b => { const on = (d.bens || []).includes(b.id); return <Pill key={b.id} on={on} onClick={() => { const c = d.bens || []; setD({ ...d, bens: on ? c.filter(x => x !== b.id) : [...c, b.id] }); }}>{b.l}</Pill>; })}</div></Fade>
   </div>;
 }
 
@@ -620,7 +717,7 @@ function buildLawyerReport(r) {
   if (r.vd > 0) rpt += "   Accrued vacation: " + r.vd + " days (" + $(r.vp) + ")\n";
   rpt += "\n2. TERMINATION DETAILS\n";
   rpt += "   Jurisdiction: " + r.pn + " (" + r.esa + ")\n";
-  rpt += "   Reason: " + (REASONS.find(x => x.id === r.reason) || {}).l + "\n";
+  rpt += "   Reason: " + ((REASONS.find(x => x.id === r.reason) || EMP_REASONS.find(x => x.id === r.reason) || {}).l || "Not specified") + "\n";
   rpt += "   Inducement: " + (r.ind ? "Yes \u2014 client reports being recruited from prior position" : "No") + "\n";
   rpt += "   Bad faith in manner: " + (r.bf ? "Yes \u2014 client reports improper conduct in termination process" : "No / not reported") + "\n";
   rpt += "   Release signed: " + (r.sr ? "YES \u2014 ASSESS ENFORCEABILITY IMMEDIATELY" : "No") + "\n";
@@ -923,7 +1020,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
 
         <Sec n={2} title="Termination details">
           <R k="Jurisdiction" v={res.pn + " (" + res.esa + ")"} />
-          <R k="Reason" v={(REASONS.find(x => x.id === res.reason) || {}).l || ""} />
+          <R k="Reason" v={(REASONS.find(x => x.id === res.reason) || EMP_REASONS.find(x => x.id === res.reason) || {}).l || ""} />
           <R k="Inducement" v={res.ind ? "Yes \u2014 recruited from prior position" : "No"} />
           <R k="Bad faith in manner" v={res.bf ? "YES \u2014 improper conduct reported" : "Not reported"} alert={res.bf} />
           <R k="Release signed" v={res.sr ? "YES \u2014 ASSESS ENFORCEABILITY" : "No"} alert={res.sr} />
@@ -1014,10 +1111,15 @@ function Res({ res, onReset, dark, setDark, mode }) {
     </div></Fade>}
 
     {res.reason === "fc" && <Fade delay={42}><div style={{ background: "var(--bg-alert)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1.5px solid rgba(216,90,48,.15)" }}>
-      <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-alert)", margin: "0 0 5px" }}>Your employer claims termination for cause</p>
-      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 6px", lineHeight: 1.5 }}>This is an allegation, not a ruling. The burden of proof is on your employer, and Canadian courts set an extremely high bar for just cause. Most for-cause terminations do not hold up. The numbers below show what you would be owed if cause is not established, which is the most likely outcome.</p>
-      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 4px", lineHeight: 1.5 }}>Even if the employer can prove just cause at common law, you may still be entitled to statutory minimums unless the conduct rises to "willful misconduct, disobedience or willful neglect of duty," which is a higher bar.</p>
-      <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-alert)", margin: 0 }}>Consult an employment lawyer immediately. Time limits for responding may apply.</p>
+      <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-alert)", margin: "0 0 5px" }}>{mode === "employer" ? "You are claiming termination for cause" : "Your employer claims termination for cause"}</p>
+      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 6px", lineHeight: 1.5 }}>{mode === "employer" ? "The burden of proof is on you. Canadian courts reject the majority of for-cause claims. The numbers below show your exposure if cause is not established, which is the most likely outcome. Budget accordingly." : "This is an allegation, not a ruling. The burden of proof is on your employer, and Canadian courts set an extremely high bar for just cause. Most for-cause terminations do not hold up. The numbers below show what you would be owed if cause is not established, which is the most likely outcome."}</p>
+      {mode !== "employer" && <><p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 4px", lineHeight: 1.5 }}>Even if the employer can prove just cause at common law, you may still be entitled to statutory minimums unless the conduct rises to "willful misconduct, disobedience or willful neglect of duty," which is a higher bar.</p>
+      <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-alert)", margin: 0 }}>Consult an employment lawyer immediately. Time limits for responding may apply.</p></>}
+    </div></Fade>}
+
+    {res.reason === "pr" && mode === "employer" && <Fade delay={42}><div style={{ background: "rgba(10,107,92,.05)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1.5px solid rgba(10,107,92,.15)" }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: T, margin: "0 0 5px" }}>Probationary termination</p>
+      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: 0, lineHeight: 1.5 }}>Most provinces allow reduced or no statutory notice during a probationary period (typically the first 3 months). However, common law reasonable notice may still apply unless explicitly excluded by a valid contract. If the employee has been employed for more than 3 months, standard statutory minimums apply regardless of any "probation" label. The numbers below show the full exposure.</p>
     </div></Fade>}
 
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 10 }}>
@@ -1089,18 +1191,22 @@ function Res({ res, onReset, dark, setDark, mode }) {
       {memo && (() => {
         if (mode === "employer") {
           const flags = [];
+          if (res.empHR) flags.push({ t: "Human rights exposure", body: "You identified potential human rights factors in this termination. If the employee is pregnant, on disability leave, has a disability, recently filed a workplace complaint, or belongs to a protected group, the termination may trigger a human rights complaint in addition to a wrongful dismissal claim. Human rights tribunals can award uncapped general damages for injury to dignity, plus lost wages. This is the highest-risk factor in any termination. Consult employment counsel before proceeding." });
           if (res.ujd) flags.push({ t: "Unjust dismissal exposure", body: "This employee may have access to an unjust dismissal claim under " + res.ujd.statute + ". This is a separate legal avenue that can result in reinstatement or compensation beyond severance. Before proceeding, ensure you have documented business reasons for the termination and consult employment counsel about this specific risk." });
-          if (res.bf) flags.push({ t: "Bad faith conduct risk", body: "You indicated the termination involved conduct that may be considered bad faith. Courts award additional damages for humiliation, dishonesty, or callous behaviour during the termination process. Even if the severance package is adequate, the manner of dismissal can create a separate claim. Ensure the termination meeting is respectful, private, and allows the employee adequate time to process." });
-          if (res.ind) flags.push({ t: "Inducement risk", body: "This employee was recruited away from a stable position. Courts treat this as a significant aggravating factor. Even with short tenure, the notice period will be substantially higher than it would otherwise be. Factor this into the package — a short-tenure employee who was induced can receive 12+ months of notice." });
+          if (res.reason === "fc" && (res.empDocLevel === "verbal" || res.empDocLevel === "none")) flags.push({ t: "Insufficient documentation for cause", body: "You are claiming cause but have " + (res.empDocLevel === "none" ? "no formal documentation" : "only verbal warnings") + ". Courts require a clear paper trail: written warnings, performance improvement plans with measurable outcomes, and evidence that the employee was given a genuine opportunity to improve. Without this, your for-cause claim will almost certainly fail, and the court may award aggravated damages for bringing an unfounded cause allegation. Strongly consider terminating without cause and offering a severance package instead." });
+          else if (res.reason === "fc") flags.push({ t: "For-cause risk", body: "You are terminating for cause. The burden of proof is entirely on you. Courts reject the majority of for-cause terminations. If cause is not established, you will owe full common law notice plus potentially additional damages for bad faith if the allegation was unfounded. Ensure you have comprehensive documentation of the conduct, progressive discipline records, and that the termination is proportional." });
+          if (res.reason === "pf" && (res.empDocLevel === "verbal" || res.empDocLevel === "none")) flags.push({ t: "Weak documentation for performance termination", body: "You are terminating for performance issues but have " + (res.empDocLevel === "none" ? "no formal documentation" : "only verbal warnings") + ". While you are not claiming cause, the employee's lawyer will argue the termination was in bad faith if there is no documented record of performance concerns, feedback, or improvement opportunities. This can increase the notice period. Going forward, implement a formal PIP before terminating for performance." });
+          if (res.bf) flags.push({ t: "Bad faith conduct risk", body: "You indicated the termination involved conduct that may be considered bad faith. Courts award additional damages (typically 2\u20136 extra months) for humiliation, dishonesty, or callous behaviour during the termination process. Even if the severance package is adequate, the manner of dismissal can create a separate claim." });
+          if (res.ind) flags.push({ t: "Inducement risk", body: "This employee was recruited away from a stable position. Courts treat this as a significant aggravating factor. Even with short tenure, the notice period will be substantially higher than it would otherwise be. Factor this into the package \u2014 a short-tenure employee who was induced can receive 12+ months of notice." });
           if (res.ci && res.ci.m < 1 && res.prov === "ON") flags.push({ t: "Waksdale exposure (Ontario)", body: "The employment contract contains a termination clause, but post-Waksdale, many such clauses are unenforceable. If any part of the termination provision fails to meet ESA minimums, the entire clause may be void, entitling the employee to full common law notice. Have your employment lawyer review the specific clause before relying on it." });
-          if (res.reason === "fc") flags.push({ t: "For-cause risk", body: "You are terminating for cause. The burden of proof is entirely on you. Courts reject the majority of for-cause terminations. If cause is not established, you will owe full common law notice plus potentially additional damages for bad faith if the allegation was unfounded. Ensure you have comprehensive documentation of the conduct, progressive discipline records, and that the termination is proportional." });
           if (res.nc) flags.push({ t: "Non-compete enforceability", body: "A non-compete or non-solicitation clause is in place. Many restrictive covenants are unenforceable in Canada. Attempting to enforce an unreasonable restriction can backfire and be used as leverage by the employee in severance negotiations. Consider releasing the restriction in exchange for cooperation on transition." });
+          if (res.empGroup) flags.push({ t: "Group termination provisions", body: "You indicated this is part of a group termination. In Ontario, terminating 50 or more employees in a 4-week period triggers mass termination provisions under s. 58 of the ESA, requiring 8\u201316 weeks of additional notice depending on the number affected. British Columbia, Manitoba, and other provinces have similar provisions with different thresholds. You may also be required to file a report with the Director of Employment Standards. Consult counsel on the specific requirements in " + res.pn + "." });
 
           const guide = [];
-          guide.push({ t: "Termination meeting best practices", body: "Hold the meeting in a private setting with two company representatives present. Prepare a brief script. State the decision clearly and without ambiguity. Do not negotiate in the meeting. Provide the termination letter and severance offer in writing. Allow the employee to leave with dignity. Give a reasonable deadline to review the offer (minimum 7 days; 14+ is standard).\n\nDo not escort the employee out publicly. Do not disable their access before the meeting. Do not announce the termination to the team before speaking to the employee. Any of these can constitute bad faith and increase your exposure." });
-          guide.push({ t: "Document preparation", body: "Before the termination meeting, prepare:\n\u2022 Termination letter stating the effective date and reason (without cause is safest unless you have strong documentation for cause)\n\u2022 Severance offer letter with the proposed package\n\u2022 Full and final release of claims — have employment counsel draft this\n\u2022 Benefits continuation details or COBRA-equivalent information\n\u2022 ROE (Record of Employment) — must be issued within 5 days\n\u2022 Final pay calculation including accrued vacation\n\u2022 Information about any equity, stock options, or RSU treatment" });
-          guide.push({ t: "Release requirements", body: "A release is only enforceable if the employee receives adequate consideration (the severance must exceed statutory minimums), has adequate time to review (minimum 7 days), and is advised to seek independent legal counsel. A release signed under duress, without adequate time, or for less than statutory minimums can be set aside. Do not pressure the employee to sign in the meeting." });
-          guide.push({ t: "Cost of litigation vs. settlement", body: "Defending a wrongful dismissal claim typically costs $15,000\u2013$50,000+ in legal fees, takes 12\u201324 months, and creates uncertainty. Offering a package at or near the court midpoint (" + $(res.cMA) + ") almost always costs less than litigation, resolves faster, and eliminates the risk of a higher court award plus costs." });
+          if (res.empTermStatus === "planned") guide.push({ t: "Termination meeting best practices", body: "Hold the meeting in a private setting with two company representatives present. Prepare a brief script. State the decision clearly and without ambiguity. Do not negotiate in the meeting. Provide the termination letter and severance offer in writing. Allow the employee to leave with dignity. Give a reasonable deadline to review the offer (minimum 7 days; 14+ is standard).\n\nDo not escort the employee out publicly. Do not disable their access before the meeting. Do not announce the termination to the team before speaking to the employee. Any of these can constitute bad faith and increase your exposure.\n\nIf the employee becomes emotional, allow them time. If they become hostile, end the meeting calmly and offer to reconvene. Never argue about the decision or justify it with performance anecdotes \u2014 this creates evidence the employee can use later." });
+          guide.push({ t: "Document preparation", body: "Before the termination meeting, prepare:\n\u2022 Termination letter stating the effective date and reason (without cause is safest unless you have strong documentation for cause)\n\u2022 Severance offer letter with the proposed package\n\u2022 Full and final release of claims \u2014 have employment counsel draft this\n\u2022 Benefits continuation details or conversion information\n\u2022 ROE (Record of Employment) \u2014 must be issued within 5 business days\n\u2022 Final pay calculation including accrued vacation (" + (res.vd > 0 ? res.vd + " days, " + $(res.vp) : "confirm with payroll") + ")\n\u2022 Information about any equity, stock options, or RSU treatment\n\u2022 Company property return checklist" });
+          guide.push({ t: "Release requirements", body: "A release is only enforceable if:\n\u2022 The employee receives adequate consideration (the severance must exceed statutory minimums \u2014 in this case, more than " + $(res.esaAmt) + ")\n\u2022 The employee has adequate time to review (minimum 7 days; 14+ days is standard practice)\n\u2022 The employee is advised to seek independent legal counsel before signing\n\u2022 The release was not signed under duress or undue pressure\n\nA release signed under inadequate conditions can be set aside entirely, leaving you with no protection against a lawsuit. Do not pressure the employee to sign in the meeting. Do not threaten to withdraw the offer if they take time." });
+          guide.push({ t: "Cost of litigation vs. settlement", body: "Defending a wrongful dismissal claim typically costs $15,000\u2013$50,000+ in legal fees, takes 12\u201324 months, and creates uncertainty and management distraction. Offering a package at or near the court midpoint (" + $(res.cMA) + ") almost always costs less than litigation, resolves faster, and eliminates the risk of a higher court award plus costs.\n\nFor this employee, the total cost range is:\n\u2022 Statutory minimum: " + $(res.esaAmt) + " (non-negotiable floor)\n\u2022 Court midpoint: " + $(res.cMA) + " (recommended target)\n\u2022 Court high: " + $(res.cHA) + " (worst-case exposure)\n\u2022 Litigation defence: $15k\u2013$50k+ on top of any award" });
 
           const blocks = [...flags, ...guide];
           return <div style={{ marginTop: 12 }}>
@@ -1137,8 +1243,8 @@ function Res({ res, onReset, dark, setDark, mode }) {
       </div>; })()}
     </div></Fade>
 
-    {/* LAWYER REPORT */}
-    <Fade delay={145}><div style={{ ...CD, border: "1.5px solid #444", background: "rgba(0,0,0,.01)" }}>
+    {/* LAWYER REPORT (employee) / TERMINATION SUMMARY (employer) */}
+    {mode !== "employer" ? <Fade delay={145}><div style={{ ...CD, border: "1.5px solid #444", background: "rgba(0,0,0,.01)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><p style={{ ...SL, color: "var(--text)", margin: 0 }}>{"\uD83D\uDCCB"} Report for your lawyer</p><button onClick={() => setLrpt(!lrpt)} style={{ background: "rgba(0,0,0,.06)", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11, color: "var(--text-sec)", fontWeight: 500, cursor: "pointer" }}>{lrpt ? "Hide \u25B2" : "View \u25BC"}</button></div>
       <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0, lineHeight: 1.4 }}>A structured intake summary formatted for your employment lawyer. Send this ahead of your first meeting to save time and money.</p>
       {lrpt && <div style={{ marginTop: 8 }}>
@@ -1161,7 +1267,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
             ]},
             { title: "2. Termination details", rows: [
               ["Jurisdiction", res.pn + " (" + res.esa + ")"],
-              ["Reason", (REASONS.find(x => x.id === res.reason) || {}).l || ""],
+              ["Reason", (REASONS.find(x => x.id === res.reason) || EMP_REASONS.find(x => x.id === res.reason) || {}).l || ""],
               ["Inducement", res.ind ? "Yes \u2014 recruited from prior position" : "No"],
               ["Bad faith", res.bf ? "Yes \u2014 improper conduct reported" : "Not reported"],
               ["Release signed", res.sr ? "YES \u2014 ASSESS ENFORCEABILITY" : "No"],
@@ -1246,15 +1352,16 @@ function Res({ res, onReset, dark, setDark, mode }) {
         </div>
       </div>}
     </div></Fade>
+    : null}
 
     {/* STATUTORY */}
     <Fade delay={160}><div style={CD}>
-      <p style={SL}><Whats tip="Every province has legislation that sets a minimum amount your employer must pay when they let you go. Think of it as the legal floor. They cannot offer you less. But courts usually award much more, which is why the 'court award' number above is typically more important.">The legal floor (statutory minimum)</Whats></p>
-      {[{ k: res.esa, v: "", x: "The law that applies in " + res.pn },
-        { k: "Termination pay", v: res.tw + "wk (" + $(res.tw * res.wk) + ")", x: "Minimum notice your employer must give based on " + res.yrs + " years" },
-        res.hs ? { k: "Severance pay", v: res.sw + "wk (" + $(res.sw * res.wk) + ")", x: "Additional payment on top of termination pay" } : null,
-        { k: "Total floor", v: res.totW + "wk (" + $(res.esaAmt) + ")", x: "Anything below this is illegal", a: true },
-        res.vd > 0 ? { k: "Vacation payout", v: res.vd + "d (" + $(res.vp) + ")", x: "Owed separately. This is wages you already earned." } : null,
+      <p style={SL}><Whats tip={mode === "employer" ? "This is the absolute minimum you must pay under the statute. Paying less exposes you to an employment standards complaint." : "Every province has legislation that sets a minimum amount your employer must pay when they let you go. Think of it as the legal floor. They cannot offer you less. But courts usually award much more, which is why the 'court award' number above is typically more important."}>{mode === "employer" ? "Statutory obligations" : "The legal floor (statutory minimum)"}</Whats></p>
+      {[{ k: res.esa, v: "", x: mode === "employer" ? "The statute that applies in " + res.pn : "The law that applies in " + res.pn },
+        { k: "Termination pay", v: res.tw + "wk (" + $(res.tw * res.wk) + ")", x: mode === "employer" ? "Minimum statutory notice for " + res.yrs + " years of service" : "Minimum notice your employer must give based on " + res.yrs + " years" },
+        res.hs ? { k: "Severance pay", v: res.sw + "wk (" + $(res.sw * res.wk) + ")", x: mode === "employer" ? "Additional statutory payment on top of termination pay" : "Additional payment on top of termination pay" } : null,
+        { k: "Total floor", v: res.totW + "wk (" + $(res.esaAmt) + ")", x: mode === "employer" ? "You cannot offer less than this" : "Anything below this is illegal", a: true },
+        res.vd > 0 ? { k: "Vacation payout", v: res.vd + "d (" + $(res.vp) + ")", x: mode === "employer" ? "Owed separately regardless of severance" : "Owed separately. This is wages you already earned." } : null,
       ].filter(Boolean).map((row, i, arr) => <div key={row.k} style={{ padding: "5px 0", borderBottom: i < arr.length - 1 ? "1px solid var(--border-lighter)" : "none" }}>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, gap: 6 }}><span style={{ color: "var(--text-sec)" }}>{row.k}</span><span style={{ fontWeight: 500, color: row.a ? T : "var(--text)", fontSize: 11 }}>{row.v}</span></div>
         <p style={{ fontSize: 10, color: "var(--text-dim)", margin: "1px 0 0", lineHeight: 1.3 }}>{row.x}</p>
@@ -1263,25 +1370,54 @@ function Res({ res, onReset, dark, setDark, mode }) {
     </div></Fade>
 
     {/* BENEFITS */}
-    {selBens.length > 0 && <Fade delay={175}><div style={{ ...CD, cursor: "pointer" }} onClick={() => setBen(!ben)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ ...SL, margin: 0 }}>What happens to your benefits</p><span style={{ fontSize: 10, color: "var(--text-muted)" }}>{ben ? "\u25B2" : "\u25BC"}</span></div>{ben && <div style={{ marginTop: 8 }}>{selBens.map(b => <div key={b.id} style={{ padding: "8px 10px", borderRadius: 7, background: "var(--bg-subtle)", marginBottom: 5 }}><p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-sec)", margin: "0 0 2px" }}>{b.l}</p><p style={{ fontSize: 10, color: "var(--text-muted)", margin: 0, lineHeight: 1.45 }}>{b.t}</p></div>)}</div>}</div></Fade>}
+    {selBens.length > 0 && <Fade delay={175}><div style={{ ...CD, cursor: "pointer" }} onClick={() => setBen(!ben)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ ...SL, margin: 0 }}>{mode === "employer" ? "Benefits continuation obligations" : "What happens to your benefits"}</p><span style={{ fontSize: 10, color: "var(--text-muted)" }}>{ben ? "\u25B2" : "\u25BC"}</span></div>{ben && <div style={{ marginTop: 8 }}>{selBens.map(b => <div key={b.id} style={{ padding: "8px 10px", borderRadius: 7, background: "var(--bg-subtle)", marginBottom: 5 }}><p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-sec)", margin: "0 0 2px" }}>{b.l}</p><p style={{ fontSize: 10, color: "var(--text-muted)", margin: 0, lineHeight: 1.45 }}>{b.t}</p></div>)}</div>}</div></Fade>}
 
-    {/* LAWYER ROI */}
-    {roi && <Fade delay={190}><div style={CD}><p style={SL}>Is hiring a lawyer worth it?</p><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5, marginBottom: 5 }}>{[{ l: "Est. fee", v: $(roi.f) }, { l: "Potential uplift", v: $(roi.u), c: T }, { l: "ROI", v: roi.r + "x", c: T }].map(x => <div key={x.l} style={{ textAlign: "center", padding: "8px 3px", borderRadius: 7, background: "var(--bg-subtle)" }}><p style={{ fontSize: 8, color: x.c || "var(--text-muted)", margin: "0 0 1px", textTransform: "uppercase" }}>{x.l}</p><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: x.c || "var(--text)" }}>{x.v}</p></div>)}</div><p style={{ fontSize: 10, color: "var(--text-dim)", margin: 0, lineHeight: 1.35 }}>Most offer free initial consultations.</p></div></Fade>}
+    {/* LAWYER ROI (employee) / COST ANALYSIS (employer) */}
+    {mode === "employer" ? <Fade delay={190}><div style={CD}><p style={SL}>Cost of litigation vs. settlement</p>
+      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: "0 0 8px", lineHeight: 1.5 }}>Defending a wrongful dismissal claim typically costs $15,000{"\u2013"}$50,000+ in legal fees, takes 12{"\u2013"}24 months, and creates uncertainty. Offering at or near the court midpoint almost always costs less than litigation.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 5 }}>
+        {[{ l: "Litigation cost", v: "$15k\u2013$50k+", c: "var(--text-alert)" }, { l: "Midpoint package", v: $(res.cMA), c: T }].map(x => <div key={x.l} style={{ textAlign: "center", padding: "8px 3px", borderRadius: 7, background: "var(--bg-subtle)" }}><p style={{ fontSize: 8, color: "var(--text-muted)", margin: "0 0 1px", textTransform: "uppercase" }}>{x.l}</p><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: x.c }}>{x.v}</p></div>)}
+      </div>
+      <p style={{ fontSize: 10, color: "var(--text-dim)", margin: 0, lineHeight: 1.35 }}>Settlement is almost always more cost-effective than litigation, even when the package exceeds what a court might award.</p>
+    </div></Fade>
+    : roi && <Fade delay={190}><div style={CD}><p style={SL}>Is hiring a lawyer worth it?</p><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5, marginBottom: 5 }}>{[{ l: "Est. fee", v: $(roi.f) }, { l: "Potential uplift", v: $(roi.u), c: T }, { l: "ROI", v: roi.r + "x", c: T }].map(x => <div key={x.l} style={{ textAlign: "center", padding: "8px 3px", borderRadius: 7, background: "var(--bg-subtle)" }}><p style={{ fontSize: 8, color: x.c || "var(--text-muted)", margin: "0 0 1px", textTransform: "uppercase" }}>{x.l}</p><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: x.c || "var(--text)" }}>{x.v}</p></div>)}</div><p style={{ fontSize: 10, color: "var(--text-dim)", margin: 0, lineHeight: 1.35 }}>Most offer free initial consultations.</p></div></Fade>}
 
     {/* DOCUMENT CHECKLIST */}
-    <Fade delay={205}><div style={{ ...CD, cursor: "pointer" }} onClick={() => setDocs(!docs)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ ...SL, margin: 0 }}>Bring to your first lawyer meeting</p><span style={{ fontSize: 10, color: "var(--text-muted)" }}>{docs ? "\u25B2" : "\u25BC"}</span></div>{docs && <div style={{ marginTop: 8 }}>{["Employment contract (all versions and amendments)", "Termination letter", "Severance offer and any release document", "Last 3 pay stubs", "T4 slips for the last 2 years", "Benefits booklet or summary", "Stock option / RSU plan documents", "Performance reviews (last 2 years)", "Record of Employment (ROE) if received", "Any emails or messages about the termination", "Non-compete / non-solicitation agreements"].map((d, i) => <div key={i} style={{ display: "flex", gap: 6, marginBottom: 3, fontSize: 11, color: "var(--text-sec)", lineHeight: 1.35 }}><span style={{ color: "var(--border)", flexShrink: 0 }}>{"\u2610"}</span><span>{d}</span></div>)}</div>}</div></Fade>
+    <Fade delay={205}><div style={{ ...CD, cursor: "pointer" }} onClick={() => setDocs(!docs)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ ...SL, margin: 0 }}>{mode === "employer" ? "Documents to prepare before termination" : "Bring to your first lawyer meeting"}</p><span style={{ fontSize: 10, color: "var(--text-muted)" }}>{docs ? "\u25B2" : "\u25BC"}</span></div>{docs && <div style={{ marginTop: 8 }}>{(mode === "employer" ? [
+      "Termination letter (state effective date and without-cause basis unless pursuing cause)",
+      "Severance offer letter with proposed package details",
+      "Full and final release of claims (have counsel draft this)",
+      "Employee's original employment contract and any amendments",
+      "Record of Employment (ROE) — must be issued within 5 business days",
+      "Final pay calculation including accrued vacation",
+      "Benefits continuation details or conversion information",
+      "Stock option / RSU plan treatment documentation",
+      "Reference letter (if offering one as part of the package)",
+      "Company property return checklist",
+      "IT access revocation plan (do NOT disable before the meeting)",
+    ] : [
+      "Employment contract (all versions and amendments)", "Termination letter", "Severance offer and any release document", "Last 3 pay stubs", "T4 slips for the last 2 years", "Benefits booklet or summary", "Stock option / RSU plan documents", "Performance reviews (last 2 years)", "Record of Employment (ROE) if received", "Any emails or messages about the termination", "Non-compete / non-solicitation agreements",
+    ]).map((d, i) => <div key={i} style={{ display: "flex", gap: 6, marginBottom: 3, fontSize: 11, color: "var(--text-sec)", lineHeight: 1.35 }}><span style={{ color: "var(--border)", flexShrink: 0 }}>{"\u2610"}</span><span>{d}</span></div>)}</div>}</div></Fade>
 
     {/* ACTION PLAN */}
-    <Fade delay={220}><div style={{ ...CD, cursor: "pointer" }} onClick={() => setChk(!chk)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ ...SL, margin: 0 }}>{"\u2611"} Post-termination action plan</p><span style={{ fontSize: 10, color: "var(--text-muted)" }}>{chk ? "\u25B2" : "\u25BC"}</span></div>{chk && <div style={{ marginTop: 8 }}>
-      {[{ t: "Immediately", i: ["Do NOT sign any release until reviewed", "Request copies of contract, amendments, termination letter", "Save relevant documents and emails from work accounts"] },
+    <Fade delay={220}><div style={{ ...CD, cursor: "pointer" }} onClick={() => setChk(!chk)}><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ ...SL, margin: 0 }}>{mode === "employer" ? "\u2611 Termination process checklist" : "\u2611 Post-termination action plan"}</p><span style={{ fontSize: 10, color: "var(--text-muted)" }}>{chk ? "\u25B2" : "\u25BC"}</span></div>{chk && <div style={{ marginTop: 8 }}>
+      {(mode === "employer" ? [
+        { t: "Before the meeting", i: ["Finalize the severance package with employment counsel", "Prepare all documents (termination letter, offer, release)", "Book a private meeting room — never terminate in a public area", "Have two company representatives present", "Prepare a brief script — keep it clear, empathetic, and under 15 minutes", "Ensure IT does NOT disable access before the meeting"] },
+        { t: "During the meeting", i: ["State the decision clearly — do not negotiate in this meeting", "Provide the termination letter and severance offer in writing", "Allow the employee time to process — do not rush them", "Give a reasonable review period for the offer (minimum 7 days, 14+ is standard)", "Advise them to seek independent legal advice before signing", "Let the employee collect personal belongings with dignity"] },
+        { t: "Within 5 business days", i: ["Issue the Record of Employment (ROE) — legally required", "Process final pay including accrued vacation", "Send benefits continuation or conversion information", "Communicate to the team — brief, respectful, no details about the reason"] },
+        { t: "Within 30 days", i: ["Follow up on the severance offer if no response", "Process any equity treatment per the plan documents", "Complete any regulatory filings if applicable", "Document the entire process for your records"] },
+      ] : [
+        { t: "Immediately", i: ["Do NOT sign any release until reviewed", "Request copies of contract, amendments, termination letter", "Save relevant documents and emails from work accounts"] },
         { t: "Within 1 week", i: ["Apply for EI through Service Canada \u2014 even with a lump sum (lump sums don't delay EI; salary continuation does, but apply now because processing takes weeks)", "Contact benefit insurers about 30-day conversion options", "Check stock option/RSU deadlines \u2014 these can lapse in 30-90 days"] },
         { t: "Within 2 weeks", i: ["Consult an employment lawyer (most offer free consultations)", "Review pension/RRSP contributions", "Start documenting your job search \u2014 courts expect mitigation"] },
         { t: "Within 30 days", i: ["Respond to offer or have lawyer respond", "Convert group insurance to individual if needed", "Review restrictive covenants for enforceability"] },
-      ].map(s => <div key={s.t} style={{ marginBottom: 8 }}><p style={{ fontSize: 11, fontWeight: 600, color: T, margin: "0 0 3px" }}>{s.t}</p>{s.i.map((it, j) => <div key={j} style={{ display: "flex", gap: 5, marginBottom: 2, fontSize: 10.5, color: "var(--text-sec)", lineHeight: 1.35 }}><span style={{ color: "var(--border)", flexShrink: 0 }}>{"\u2610"}</span><span>{it}</span></div>)}</div>)}
+      ]).map(s => <div key={s.t} style={{ marginBottom: 8 }}><p style={{ fontSize: 11, fontWeight: 600, color: T, margin: "0 0 3px" }}>{s.t}</p>{s.i.map((it, j) => <div key={j} style={{ display: "flex", gap: 5, marginBottom: 2, fontSize: 10.5, color: "var(--text-sec)", lineHeight: 1.35 }}><span style={{ color: "var(--border)", flexShrink: 0 }}>{"\u2610"}</span><span>{it}</span></div>)}</div>)}
     </div>}</div></Fade>
 
-    {/* TAX */}
-    <Fade delay={235}><div style={CD}><p style={SL}>Tax considerations</p><p style={{ fontSize: 11, color: "var(--text-sec)", margin: 0, lineHeight: 1.45 }}>Lump-sum payments are taxed as employment income, potentially pushing you into a higher bracket. Salary continuation may lower your effective tax. Pre-1996 service retiring allowances may qualify for RRSP transfer. Ask your accountant about the optimal structure.</p></div></Fade>
+    {/* TAX / EMPLOYER OBLIGATIONS */}
+    <Fade delay={235}><div style={CD}><p style={SL}>{mode === "employer" ? "Employer obligations" : "Tax considerations"}</p><p style={{ fontSize: 11, color: "var(--text-sec)", margin: 0, lineHeight: 1.45 }}>{mode === "employer"
+      ? "Lump-sum severance payments must have income tax, CPP, and EI deducted at source. Salary continuation is processed through normal payroll. Issue a T4 or T4A as appropriate. The Record of Employment (ROE) must be filed within 5 business days of the last day of work. If the employee has pre-1996 service, retiring allowance transfers to RRSP may apply. Consult your payroll provider and accountant on the optimal structure."
+      : "Lump-sum payments are taxed as employment income, potentially pushing you into a higher bracket. Salary continuation may lower your effective tax. Pre-1996 service retiring allowances may qualify for RRSP transfer. Ask your accountant about the optimal structure."}</p></div></Fade>
 
     {/* DISCLAIMER */}
     <Fade delay={250}><div style={{ background: "var(--bg-warning)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1px solid var(--border-warning)" }}>
@@ -1329,7 +1465,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
 }
 
 /* ═══════════════════ APP ═══════════════════ */
-const EMPTY = { province: "", age: "", years: "", months: "", salary: "", bonus: "", role: "", jobTitle: "", sevElig: false, hasOffer: null, offFmt: "amt", offAmt: "", offWks: "", offMos: "", reason: "", induced: null, hasContract: null, contractTerms: false, contractAge: "", bens: [], industry: "", vacDays: "", signedRelease: null, deadline: null, deadlineDays: "", hasDependents: null, badFaith: null, newJob: "", nonCompete: null };
+const EMPTY = { province: "", age: "", years: "", months: "", salary: "", bonus: "", role: "", jobTitle: "", sevElig: false, hasOffer: null, offFmt: "amt", offAmt: "", offWks: "", offMos: "", reason: "", induced: null, hasContract: null, contractTerms: false, contractAge: "", bens: [], industry: "", vacDays: "", signedRelease: null, deadline: null, deadlineDays: "", hasDependents: null, badFaith: null, newJob: "", nonCompete: null, empTermStatus: "", empDocLevel: "", empHumanRights: null, empGroupTerm: null };
 function loadSession() { try { const s = sessionStorage.getItem("p_state"); if (s) { const p = JSON.parse(s); return { step: p.step ?? -1, d: { ...EMPTY, ...p.d }, mode: p.mode ?? "employee" }; } } catch {} return null; }
 function saveSession(step, d, mode) { try { sessionStorage.setItem("p_state", JSON.stringify({ step, d, mode })); } catch {} }
 
