@@ -944,6 +944,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
   }
 
   if (printView) {
+    const E = mode === "employer";
     const R = ({ k, v, accent, alert: al }) => <div className="pdf-row" style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12.5, borderBottom: "1px solid var(--border-lighter)" }}><span style={{ color: "var(--text-muted)" }}>{k}</span><span style={{ fontWeight: 500, color: al ? "#993C1D" : accent ? T : "var(--text)", textAlign: "right", maxWidth: "60%" }}>{v}</span></div>;
     const Sec = ({ n, title, children }) => <div className="pdf-section" style={{ marginBottom: 20 }}><p style={{ fontSize: 11, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 8px", paddingBottom: 4, borderBottom: "2px solid " + Tl }}>{n}. {title}</p>{children}</div>;
     const verdictColor = !asmnt ? T : asmnt.c;
@@ -957,39 +958,33 @@ function Res({ res, onReset, dark, setDark, mode }) {
       </div>
 
       <div ref={pdfRef} style={{ background: "#ffffff", padding: "24px", color: "#1A1A18", "--bg-card": "#ffffff", "--bg-subtle": "#FAFAF7", "--bg-muted": "#F1EFE8", "--text": "#1A1A18", "--text-sec": "#5F5E5A", "--text-muted": "#888", "--text-dim": "#999", "--text-faint": "#B4B2A9", "--text-alert": "#993C1D", "--text-alert-dark": "#712B13", "--text-warning": "#854F0B", "--bg-warning": "#FFF8E7", "--border-warning": "#F0E6C8", "--border": "#D3D1C7", "--border-light": "#E8E6E0", "--border-lighter": "#F1EFE8" }}>
-        {/* Report header */}
         <div style={{ background: "#333", color: "#fff", padding: "20px 24px", borderRadius: 10, marginBottom: 20 }}>
-          <p style={{ fontSize: 10, color: "rgba(255,255,255,.5)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 4px" }}>Privileged & confidential</p>
-          <p style={{ fontSize: 20, fontWeight: 500, margin: "0 0 2px" }}>Severance Analysis</p>
+          <p style={{ fontSize: 10, color: "rgba(255,255,255,.5)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 4px" }}>{E ? "Confidential" : "Privileged & confidential"}</p>
+          <p style={{ fontSize: 20, fontWeight: 500, margin: "0 0 2px" }}>{E ? "Termination Exposure Analysis" : "Severance Analysis"}</p>
           <p style={{ fontSize: 11, color: "rgba(255,255,255,.5)", margin: 0 }}>Prepared by Parachute | {res.pn} | {res.jt || res.rl}, age {res.age}, {res.yrs}y tenure</p>
         </div>
 
-        {/* ── EXECUTIVE SUMMARY ── */}
         <div className="pdf-section" style={{ marginBottom: 24, padding: "18px 20px", borderRadius: 10, border: "2px solid " + T, background: "rgba(10,107,92,.02)" }}>
           <p style={{ fontSize: 11, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".04em", margin: "0 0 12px" }}>Executive summary</p>
-
-          {/* Verdict */}
           {asmnt && <div style={{ display: "flex", gap: 10, marginBottom: 14, padding: "10px 12px", borderRadius: 8, background: verdictBg }}>
             <div style={{ width: 28, height: 28, borderRadius: 6, background: verdictColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", fontSize: 13, fontWeight: 700 }}>{asmnt.i}</div>
             <div><p style={{ fontSize: 12.5, fontWeight: 600, color: verdictColor, margin: "0 0 2px" }}>{asmnt.l}</p><p style={{ fontSize: 11, color: "var(--text-sec)", margin: 0, lineHeight: 1.4 }}>{asmnt.d}</p></div>
           </div>}
-          {!asmnt && <p style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 14px" }}>No offer provided. The full estimated range is shown below.</p>}
+          {!asmnt && <p style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 14px" }}>{E ? "No planned offer entered. The full exposure range is shown below." : "No offer provided. The full estimated range is shown below."}</p>}
 
-          {/* Key numbers */}
           <div className="pdf-card" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
             <div style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border-light)" }}>
-              <p style={{ fontSize: 9, color: "var(--text-muted)", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>Legal floor</p>
+              <p style={{ fontSize: 9, color: "var(--text-muted)", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>{E ? "Statutory minimum" : "Legal floor"}</p>
               <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 1px" }}>{$(res.esaAmt)}</p>
               <p style={{ fontSize: 10, color: "var(--text-faint)", margin: 0 }}>{res.totW} weeks statutory</p>
             </div>
             <div style={{ padding: "10px 12px", borderRadius: 8, border: "2px solid " + T, background: "rgba(10,107,92,.03)" }}>
-              <p style={{ fontSize: 9, color: T, margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>Court award (mid)</p>
+              <p style={{ fontSize: 9, color: T, margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>{E ? "Court exposure (mid)" : "Court award (mid)"}</p>
               <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 1px", color: T }}>{$(res.cMA)}</p>
               <p style={{ fontSize: 10, color: "var(--text-faint)", margin: 0 }}>{res.cM} months common law</p>
             </div>
           </div>
 
-          {/* Visual bar comparison */}
           <div>{bars.map((b, i) => <div key={i} style={{ marginBottom: 6 }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, marginBottom: 2 }}>
               <span style={{ color: "var(--text-sec)", fontWeight: 500 }}>{b.l}</span>
@@ -1001,15 +996,13 @@ function Res({ res, onReset, dark, setDark, mode }) {
           </div>)}</div>
         </div>
 
-        {/* ── UNJUST DISMISSAL FLAG ── */}
-        {res.ujd && <div className="pdf-section" style={{ marginBottom: 20, padding: "14px 16px", borderRadius: 8, background: "rgba(10,107,92,.04)", border: "1.5px solid rgba(10,107,92,.2)" }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: T, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: ".04em" }}>Unjust dismissal claim available</p>
-          <p style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 6px", lineHeight: 1.5 }}>{res.ujd.remedy}</p>
+        {res.ujd && <div className="pdf-section" style={{ marginBottom: 20, padding: "14px 16px", borderRadius: 8, background: E ? "rgba(216,90,48,.04)" : "rgba(10,107,92,.04)", border: E ? "1.5px solid rgba(216,90,48,.12)" : "1.5px solid rgba(10,107,92,.2)" }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: E ? "#993C1D" : T, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: ".04em" }}>{E ? "Unjust dismissal exposure" : "Unjust dismissal claim available"}</p>
+          <p style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 6px", lineHeight: 1.5 }}>{E ? "This employee may be eligible for an unjust dismissal complaint under " + res.ujd.statute + ". This can result in reinstatement or additional compensation beyond severance." : res.ujd.remedy}</p>
           <p style={{ fontSize: 10.5, color: "var(--text-muted)", margin: 0 }}>Statutory basis: {res.ujd.statute}</p>
         </div>}
 
-        {/* ── DETAILED SECTIONS ── */}
-        <Sec n={1} title="Client profile">
+        <Sec n={1} title={E ? "Employee profile" : "Client profile"}>
           <R k="Age" v={res.age + ""} /><R k="Title" v={res.jt || res.rl} /><R k="Industry" v={res.industry || "Not specified"} />
           <R k="Tenure" v={res.yrs + " years"} /><R k="Base salary" v={$(res.sal)} />
           {res.bonus > 0 && <R k="Variable compensation" v={$(res.bonus)} />}
@@ -1022,10 +1015,12 @@ function Res({ res, onReset, dark, setDark, mode }) {
           <R k="Jurisdiction" v={res.pn + " (" + res.esa + ")"} />
           <R k="Reason" v={(REASONS.find(x => x.id === res.reason) || EMP_REASONS.find(x => x.id === res.reason) || {}).l || ""} />
           <R k="Inducement" v={res.ind ? "Yes \u2014 recruited from prior position" : "No"} />
-          <R k="Bad faith in manner" v={res.bf ? "YES \u2014 improper conduct reported" : "Not reported"} alert={res.bf} />
-          <R k="Release signed" v={res.sr ? "YES \u2014 ASSESS ENFORCEABILITY" : "No"} alert={res.sr} />
+          <R k={E ? "Bad faith in manner" : "Bad faith in manner"} v={res.bf ? "YES \u2014 improper conduct reported" : "Not reported"} alert={res.bf} />
+          {!E && <R k="Release signed" v={res.sr ? "YES \u2014 ASSESS ENFORCEABILITY" : "No"} alert={res.sr} />}
           <R k="New employment" v={res.newJob === "yes" ? "Secured" : res.newJob === "looking" ? "Searching" : "Not yet"} />
           <R k="Non-compete/non-solicit" v={res.nc ? "Yes \u2014 review enforceability" : "No"} />
+          {E && res.empHR && <R k="Human rights factors" v="YES \u2014 HIGH RISK" alert />}
+          {E && res.empGroup && <R k="Group termination" v="Yes \u2014 review mass termination provisions" alert />}
         </Sec>
 
         <Sec n={3} title="Contract analysis">
@@ -1033,7 +1028,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
           {res.ci.m < 1 && <p style={{ fontSize: 12, color: "var(--text-alert)", fontWeight: 600, margin: "4px 0 0" }}>ACTION: Review clause for Waksdale compliance and ESA floor issues.</p>}
         </Sec>
 
-        <Sec n={4} title="Quantum assessment">
+        <Sec n={4} title={E ? "Exposure assessment" : "Quantum assessment"}>
           <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", margin: "0 0 6px" }}>Statutory minimum</p>
           <R k="Termination pay" v={res.tw + " weeks (" + $(res.tw * res.wk) + ")"} />
           {res.hs && <R k="Severance pay" v={res.sw + " weeks (" + $(res.sw * res.wk) + ")"} />}
@@ -1050,35 +1045,36 @@ function Res({ res, onReset, dark, setDark, mode }) {
           </p>
         </Sec>
 
-        {res.off !== null && <Sec n={5} title="Offer analysis">
-          <R k="Offer" v={$(res.off) + " (" + res.offMo + " months)"} />
+        {res.off !== null && <Sec n={5} title={E ? "Planned offer analysis" : "Offer analysis"}>
+          <R k={E ? "Planned offer" : "Offer"} v={$(res.off) + " (" + res.offMo + " months)"} />
           <R k="vs. statutory floor" v={res.off >= res.esaAmt ? "ABOVE" : "BELOW"} alert={res.off < res.esaAmt} accent={res.off >= res.esaAmt} />
           <R k="vs. CL midpoint" v={res.off >= res.cMA ? "At or above" : $(res.cMA - res.off) + " below"} alert={res.off < res.cMA} accent={res.off >= res.cMA} />
         </Sec>}
 
-        <Sec n={res.off !== null ? 6 : 5} title="Recommended strategy">
-          {res.sr && <p style={{ fontSize: 12, color: "var(--text-alert)", fontWeight: 600, margin: "0 0 8px" }}>PRIORITY: Assess release enforceability (duress, independent advice, adequacy, ESA floor)</p>}
+        <Sec n={res.off !== null ? 6 : 5} title={E ? "Recommended package" : "Recommended strategy"}>
+          {!E && res.sr && <p style={{ fontSize: 12, color: "var(--text-alert)", fontWeight: 600, margin: "0 0 8px" }}>PRIORITY: Assess release enforceability (duress, independent advice, adequacy, ESA floor)</p>}
           <div className="pdf-strategy" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, margin: "8px 0 12px" }}>
-            {[["Opening", res.cH, res.cHA], ["Target", res.cM, res.cMA], ["Floor", res.cL, res.cLA]].map(([label, mo, amt]) => (
-              <div key={label} style={{ textAlign: "center", padding: "12px 8px", borderRadius: 8, border: label === "Target" ? "2px solid " + T : "1px solid var(--border-light)" }}>
-                <p style={{ fontSize: 10, color: label === "Target" ? T : "var(--text-muted)", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>{label}</p>
-                <p style={{ fontSize: 18, fontWeight: 500, margin: "0 0 1px", color: label === "Target" ? T : "var(--text)" }}>{mo} mo</p>
+            {(E ? [["Minimum", res.totW + "wk", res.esaAmt], ["Recommended", res.cM + "mo", res.cMA], ["Max exposure", res.cH + "mo", res.cHA]] : [["Opening", res.cH, res.cHA], ["Target", res.cM, res.cMA], ["Floor", res.cL, res.cLA]]).map(([label, mo, amt]) => (
+              <div key={label} style={{ textAlign: "center", padding: "12px 8px", borderRadius: 8, border: (label === "Target" || label === "Recommended") ? "2px solid " + T : "1px solid var(--border-light)" }}>
+                <p style={{ fontSize: 10, color: (label === "Target" || label === "Recommended") ? T : "var(--text-muted)", margin: "0 0 2px", textTransform: "uppercase", fontWeight: 600 }}>{label}</p>
+                <p style={{ fontSize: 18, fontWeight: 500, margin: "0 0 1px", color: (label === "Target" || label === "Recommended") ? T : "var(--text)" }}>{mo}</p>
                 <p style={{ fontSize: 11, color: "var(--text-faint)", margin: 0 }}>{$(amt)}</p>
               </div>
             ))}
           </div>
           {(res.bens || []).length > 0 && <p style={{ fontSize: 12, color: "var(--text-sec)" }}>Include: benefits continuation, pro-rated bonus, vacation payout, reference</p>}
-          {res.dl && <p style={{ fontSize: 12, color: "var(--text-alert)" }}>NOTE: Signing deadline{res.dlDays ? " (" + res.dlDays + " days)" : ""} reported. Consider extension.</p>}
+          {!E && res.dl && <p style={{ fontSize: 12, color: "var(--text-alert)" }}>NOTE: Signing deadline{res.dlDays ? " (" + res.dlDays + " days)" : ""} reported. Consider extension.</p>}
         </Sec>
 
-        <Sec n={res.off !== null ? 7 : 6} title="Documents to request from client">
+        <Sec n={res.off !== null ? 7 : 6} title={E ? "Documents to prepare" : "Documents to request from client"}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-            {["Employment contract (all versions)", "Termination letter", "Severance offer / release", "Last 3 pay stubs", "T4s (last 2 years)", "Benefits booklet", "Stock/RSU plan docs", "Performance reviews (last 2 years)", "Record of Employment", "Relevant correspondence", "Non-compete / non-solicit"].map(d => <div key={d} style={{ fontSize: 11, color: "var(--text-sec)", display: "flex", gap: 5 }}><span style={{ color: "var(--border)" }}>{"\u2610"}</span>{d}</div>)}
+            {(E ? ["Termination letter", "Severance offer letter", "Full and final release", "Employee's contract", "ROE (within 5 business days)", "Final pay calculation", "Benefits continuation info", "Equity/RSU treatment", "Reference letter (if offered)", "Company property checklist", "IT access revocation plan"]
+            : ["Employment contract (all versions)", "Termination letter", "Severance offer / release", "Last 3 pay stubs", "T4s (last 2 years)", "Benefits booklet", "Stock/RSU plan docs", "Performance reviews (last 2 years)", "Record of Employment", "Relevant correspondence", "Non-compete / non-solicit"]).map(d => <div key={d} style={{ fontSize: 11, color: "var(--text-sec)", display: "flex", gap: 5 }}><span style={{ color: "var(--border)" }}>{"\u2610"}</span>{d}</div>)}
           </div>
         </Sec>
 
         <div style={{ borderTop: "1px solid var(--border-light)", paddingTop: 12, marginTop: 12 }}>
-          <p style={{ fontSize: 10, color: "var(--text-muted)", margin: 0, lineHeight: 1.5 }}>Generated by Parachute Severance Analyzer (useparachute.ca). For informational purposes only. Not a substitute for independent legal analysis.</p>
+          <p style={{ fontSize: 10, color: "var(--text-muted)", margin: 0, lineHeight: 1.5 }}>Generated by Parachute {E ? "Employer" : "Severance"} Analyzer (useparachute.ca). For informational purposes only. Not a substitute for independent legal analysis.</p>
         </div>
       </div>
     </div>;
