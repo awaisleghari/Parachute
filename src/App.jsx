@@ -184,6 +184,7 @@ function Logo({ size = 32, color = "#fff" }) {
 function Landing({ onStart }) {
   const [agreed, setAgreed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [curMode, setCurMode] = useState("employee");
   const [hov, setHov] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [scrollY, setScrollY] = useState(0);
@@ -254,29 +255,35 @@ function Landing({ onStart }) {
 
       {/* CTA */}
       <div style={ani(.4)}>
-        {!showTerms ? <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
-          {/* Glow behind CTA */}
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 200, height: 60, borderRadius: 60, background: "radial-gradient(ellipse, rgba(100,220,180,.3) 0%, rgba(60,120,220,.15) 50%, transparent 80%)", filter: "blur(20px)", animation: "ctaGlow 3s ease-in-out infinite", zIndex: 0, pointerEvents: "none" }} />
-          <button
-          onMouseEnter={() => setHov("cta")}
-          onMouseLeave={() => setHov(null)}
-          onClick={() => setShowTerms(true)}
-          style={{
-            position: "relative", zIndex: 1,
-            padding: "18px 48px",
-            borderRadius: 60,
-            border: "none",
-            background: hov === "cta" ? "#fff" : "rgba(255,255,255,.95)",
-            color: "#053D32",
-            fontSize: 17,
-            fontWeight: 600,
-            fontFamily: BF,
-            cursor: "pointer",
-            transform: hov === "cta" ? "translateY(-2px)" : "translateY(0)",
-            boxShadow: hov === "cta" ? "0 16px 48px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.2)" : "0 6px 24px rgba(0,0,0,.15)",
-            transition: "all .25s cubic-bezier(.25,1,.5,1)",
-            letterSpacing: ".01em",
-          }}>Start your free analysis →</button>
+        {!showTerms ? <div>
+          <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
+            <div style={{ position: "absolute", top: "50%", left: "50%", width: 200, height: 60, borderRadius: 60, background: "radial-gradient(ellipse, rgba(100,220,180,.3) 0%, rgba(60,120,220,.15) 50%, transparent 80%)", filter: "blur(20px)", animation: "ctaGlow 3s ease-in-out infinite", zIndex: 0, pointerEvents: "none" }} />
+            <button
+              onMouseEnter={() => setHov("cta")}
+              onMouseLeave={() => setHov(null)}
+              onClick={() => { setCurMode("employee"); setShowTerms(true); }}
+              style={{
+                position: "relative", zIndex: 1, padding: "18px 48px", borderRadius: 60, border: "none",
+                background: hov === "cta" ? "#fff" : "rgba(255,255,255,.95)", color: "#053D32",
+                fontSize: 17, fontWeight: 600, fontFamily: BF, cursor: "pointer",
+                transform: hov === "cta" ? "translateY(-2px)" : "translateY(0)",
+                boxShadow: hov === "cta" ? "0 16px 48px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.2)" : "0 6px 24px rgba(0,0,0,.15)",
+                transition: "all .25s cubic-bezier(.25,1,.5,1)", letterSpacing: ".01em",
+              }}>I was let go →</button>
+          </div>
+          <div style={{ marginTop: 14, textAlign: "center" }}>
+            <button
+              onMouseEnter={() => setHov("emp")}
+              onMouseLeave={() => setHov(null)}
+              onClick={() => { setCurMode("employer"); setShowTerms(true); }}
+              style={{
+                padding: "14px 36px", borderRadius: 60,
+                border: "1px solid rgba(255,255,255,.15)",
+                background: hov === "emp" ? "rgba(255,255,255,.08)" : "transparent",
+                color: "rgba(255,255,255,.7)", fontSize: 14, fontWeight: 500, fontFamily: BF,
+                cursor: "pointer", transition: "all .2s cubic-bezier(.25,1,.5,1)",
+              }}>I'm letting someone go →</button>
+          </div>
         </div>
         : <div style={{ maxWidth: 480, margin: "0 auto", background: "rgba(0,0,0,.35)", borderRadius: 20, padding: "24px", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,.08)", textAlign: "left" }}>
           <p style={{ fontSize: 17, fontWeight: 700, margin: "0 0 4px" }}>Terms of Use & Disclaimer</p>
@@ -291,7 +298,7 @@ function Landing({ onStart }) {
           <button
             onMouseEnter={() => agreed && setHov("go")}
             onMouseLeave={() => setHov(null)}
-            onClick={agreed ? onStart : undefined}
+            onClick={agreed ? () => onStart(curMode) : undefined}
             style={{
               width: "100%", padding: "16px", borderRadius: 12, border: "none",
               background: agreed ? (hov === "go" ? "#fff" : "rgba(255,255,255,.95)") : "rgba(255,255,255,.1)",
@@ -365,9 +372,10 @@ function Landing({ onStart }) {
 /* ═══════════════════ STEPS ═══════════════════ */
 const TS = 6;
 
-function S1({ d, setD }) {
+function S1({ d, setD, mode }) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const E = mode === "employer";
   const allJurisdictions = Object.entries(PROVS).map(([c, p]) => ({ code: c, name: p.n, group: c === "FED" ? "Federal" : p.tr ? "Territory" : "Province" }));
   const filtered = search ? allJurisdictions.filter(j => j.name.toLowerCase().includes(search.toLowerCase())) : allJurisdictions;
   const selected = d.province ? PROVS[d.province]?.n : "";
@@ -375,7 +383,7 @@ function S1({ d, setD }) {
 
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 1 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Where do you work?</h2>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>{E ? "Where does the employee work?" : "Where do you work?"}</h2>
       <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>Each province and territory has its own employment rules.</p></Fade>
     <Fade delay={20}>
       <label style={QL}>Province, territory, or federal</label>
@@ -417,11 +425,12 @@ function S1({ d, setD }) {
   </div>;
 }
 
-function S2({ d, setD }) {
+function S2({ d, setD, mode }) {
+  const E = mode === "employer";
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 2 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Employment details</h2>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>We use these to estimate what you're owed.</p></Fade>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>{E ? "Employee details" : "Employment details"}</h2>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>{E ? "We use these to estimate the exposure." : "We use these to estimate what you're owed."}</p></Fade>
     <Fade delay={25}><Fld label="Age" type="number" value={d.age} onChange={v => setD({ ...d, age: v })} placeholder="e.g. 42" /></Fade>
     <Fade delay={40}><label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" }}>How long you worked there</label><div style={{ display: "flex", gap: 7, marginBottom: 10 }}><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.years} onChange={v => setD({ ...d, years: v })} type="number" placeholder="Years" suffix="yrs" /></div><div style={{ flex: 1, minWidth: 0 }}><Fld value={d.months} onChange={v => setD({ ...d, months: v })} type="number" placeholder="Months" suffix="mo" /></div></div></Fade>
     <Fade delay={55}><Fld label="Job title" value={d.jobTitle} onChange={v => setD({ ...d, jobTitle: v })} placeholder="e.g. Senior Marketing Manager" /></Fade>
@@ -434,18 +443,19 @@ function S2({ d, setD }) {
   </div>;
 }
 
-function S3({ d, setD }) {
+function S3({ d, setD, mode }) {
+  const E = mode === "employer";
   const QL = { display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" };
   const QH = { fontSize: 11, color: "var(--text-muted)", marginTop: 0, marginBottom: 7, lineHeight: 1.4 };
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 3 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your termination</h2>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>These details affect how much you may be owed.</p></Fade>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>{E ? "The termination" : "Your termination"}</h2>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>{E ? "These details affect the exposure." : "These details affect how much you may be owed."}</p></Fade>
 
-    <Fade delay={25}><label style={QL}>Why were you let go?</label>{REASONS.map(r => <Sel key={r.id} on={d.reason === r.id} onClick={() => setD({ ...d, reason: r.id })} sub={r.i}>{r.l}</Sel>)}</Fade>
-    {((parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12) < 3 && <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>Did they recruit you away from a previous job?</label><p style={QH}>Since you were there under 3 years, this matters. If they convinced you to leave a stable position and then let you go quickly, courts often award significantly more than your short tenure alone would suggest.</p><Sel on={d.induced === true} onClick={() => setD({ ...d, induced: true })}>Yes, I was recruited away</Sel><Sel on={d.induced === false} onClick={() => setD({ ...d, induced: false })}>No</Sel></Fade>}
+    <Fade delay={25}><label style={QL}>{E ? "Reason for termination" : "Why were you let go?"}</label>{REASONS.map(r => <Sel key={r.id} on={d.reason === r.id} onClick={() => setD({ ...d, reason: r.id })} sub={r.i}>{r.l}</Sel>)}</Fade>
+    {((parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12) < 3 && <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>{E ? "Was this employee recruited from another position?" : "Did they recruit you away from a previous job?"}</label><p style={QH}>{E ? "If you recruited this employee away from a stable position and are now terminating them within 3 years, courts may award significantly more." : "Since you were there under 3 years, this matters. If they convinced you to leave a stable position and then let you go quickly, courts often award significantly more than your short tenure alone would suggest."}</p><Sel on={d.induced === true} onClick={() => setD({ ...d, induced: true })}>{E ? "Yes, we recruited them" : "Yes, I was recruited away"}</Sel><Sel on={d.induced === false} onClick={() => setD({ ...d, induced: false })}>No</Sel></Fade>}
 
-    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>Your employment contract</label><p style={QH}>Many contracts try to limit what you get. Courts throw them out more often than you'd expect.</p>
+    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>{E ? "Employment contract" : "Your employment contract"}</label><p style={QH}>{E ? "Does the employee have a written contract with a termination clause?" : "Many contracts try to limit what you get. Courts throw them out more often than you'd expect."}</p>
       <Sel on={d.hasContract === true} onClick={() => setD({ ...d, hasContract: true, contractTerms: false, contractAge: "" })}>I signed a written contract or offer letter</Sel>
       {d.hasContract === true && <div style={{ marginLeft: 24, borderLeft: "2px solid " + Tl, paddingLeft: 12, marginTop: 3, marginBottom: 6 }}>
         <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 5px", lineHeight: 1.4 }}>Look for sections titled "Termination", "Notice", or "Severance" in your contract.</p>
@@ -461,34 +471,36 @@ function S3({ d, setD }) {
       <Sel on={d.hasContract === false} onClick={() => setD({ ...d, hasContract: false, contractTerms: false, contractAge: "" })}>No written contract / not sure</Sel>
     </Fade>
 
-    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>Was the termination handled badly?</label><p style={QH}>Escorted out, humiliated, lied to, or announced to others before you were told. Courts can award extra damages.</p><Sel on={d.badFaith === true} onClick={() => setD({ ...d, badFaith: true })}>Yes</Sel><Sel on={d.badFaith === false} onClick={() => setD({ ...d, badFaith: false })}>No / reasonably handled</Sel></Fade>
+    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>{E ? "Was there any misconduct in how the termination was handled?" : "Was the termination handled badly?"}</label><p style={QH}>{E ? "Escorting out publicly, making false accusations, announcing the termination to others first. Courts award extra damages for bad faith conduct." : "Escorted out, humiliated, lied to, or announced to others before you were told. Courts can award extra damages."}</p><Sel on={d.badFaith === true} onClick={() => setD({ ...d, badFaith: true })}>Yes</Sel><Sel on={d.badFaith === false} onClick={() => setD({ ...d, badFaith: false })}>{E ? "No / handled professionally" : "No / reasonably handled"}</Sel></Fade>
   </div>;
 }
 
-function S4({ d, setD }) {
+function S4({ d, setD, mode }) {
+  const E = mode === "employer";
   const QL = { display: "block", fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5, textTransform: "uppercase", letterSpacing: ".05em" };
   const QH = { fontSize: 11, color: "var(--text-muted)", marginTop: 0, marginBottom: 7, lineHeight: 1.4 };
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 4 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your situation</h2>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>A few more details that affect your position.</p></Fade>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>{E ? "The situation" : "Your situation"}</h2>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>{E ? "A few more details that affect the exposure." : "A few more details that affect your position."}</p></Fade>
 
-    <Fade delay={25}><label style={QL}>Have you signed a release?</label><p style={QH}>A release is where you give up your right to sue in exchange for the severance. This is critical.</p><Sel on={d.signedRelease === true} onClick={() => setD({ ...d, signedRelease: true })} sub="May limit options, but can sometimes be undone">Already signed</Sel><Sel on={d.signedRelease === false} onClick={() => setD({ ...d, signedRelease: false })}>Not yet</Sel></Fade>
+    <Fade delay={25}><label style={QL}>{E ? "Has the employee signed a release?" : "Have you signed a release?"}</label><p style={QH}>{E ? "A release is where the employee gives up their right to sue in exchange for the severance." : "A release is where you give up your right to sue in exchange for the severance. This is critical."}</p><Sel on={d.signedRelease === true} onClick={() => setD({ ...d, signedRelease: true })} sub={E ? "Review enforceability with counsel" : "May limit options, but can sometimes be undone"}>Already signed</Sel><Sel on={d.signedRelease === false} onClick={() => setD({ ...d, signedRelease: false })}>Not yet</Sel></Fade>
 
-    <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>Have you found new work?</label><Sel on={d.newJob === "yes"} onClick={() => setD({ ...d, newJob: "yes" })} sub="Reduces notice, but you're still owed the difference">Yes</Sel><Sel on={d.newJob === "looking"} onClick={() => setD({ ...d, newJob: "looking" })}>Actively looking</Sel><Sel on={d.newJob === "no"} onClick={() => setD({ ...d, newJob: "no" })}>Not yet</Sel></Fade>
+    <Fade delay={50}><label style={{ ...QL, marginTop: 10 }}>{E ? "Has the employee found new work?" : "Have you found new work?"}</label><Sel on={d.newJob === "yes"} onClick={() => setD({ ...d, newJob: "yes" })} sub={E ? "Reduces your exposure through mitigation" : "Reduces notice, but you're still owed the difference"}>Yes</Sel><Sel on={d.newJob === "looking"} onClick={() => setD({ ...d, newJob: "looking" })}>Actively looking</Sel><Sel on={d.newJob === "no"} onClick={() => setD({ ...d, newJob: "no" })}>Not yet</Sel></Fade>
 
-    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>Non-compete or non-solicit clause?</label><Sel on={d.nonCompete === true} onClick={() => setD({ ...d, nonCompete: true })} sub="Many are unenforceable in Canada">Yes</Sel><Sel on={d.nonCompete === false} onClick={() => setD({ ...d, nonCompete: false })}>No / not sure</Sel></Fade>
+    <Fade delay={75}><label style={{ ...QL, marginTop: 10 }}>{E ? "Non-compete or non-solicit clause?" : "Non-compete or non-solicit clause?"}</label><Sel on={d.nonCompete === true} onClick={() => setD({ ...d, nonCompete: true })} sub={E ? "Many are unenforceable in Canada. Review with counsel." : "Many are unenforceable in Canada"}>Yes</Sel><Sel on={d.nonCompete === false} onClick={() => setD({ ...d, nonCompete: false })}>No / not sure</Sel></Fade>
 
-    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>Benefits while employed</label><p style={QH}>Select all that apply. We'll explain what happens to each one.</p><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{BENS.map(b => { const on = (d.bens || []).includes(b.id); return <Pill key={b.id} on={on} onClick={() => { const c = d.bens || []; setD({ ...d, bens: on ? c.filter(x => x !== b.id) : [...c, b.id] }); }}>{b.l}</Pill>; })}</div></Fade>
+    <Fade delay={100}><label style={{ ...QL, marginTop: 10 }}>{E ? "Employee benefits" : "Benefits while employed"}</label><p style={QH}>{E ? "Select all that apply. These affect total exposure and negotiation scope." : "Select all that apply. We'll explain what happens to each one."}</p><div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>{BENS.map(b => { const on = (d.bens || []).includes(b.id); return <Pill key={b.id} on={on} onClick={() => { const c = d.bens || []; setD({ ...d, bens: on ? c.filter(x => x !== b.id) : [...c, b.id] }); }}>{b.l}</Pill>; })}</div></Fade>
   </div>;
 }
 
-function S5({ d, setD }) {
+function S5({ d, setD, mode }) {
+  const E = mode === "employer";
   return <div style={{ maxWidth: 430, margin: "0 auto", padding: "0 20px" }}>
     <Fade><p style={{ fontSize: 10, fontWeight: 600, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 3 }}>{"Step 5 of " + TS}</p>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>Your severance offer</h2>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>If you've received a severance package, we'll compare it and draft a response.</p></Fade>
-    <Fade delay={30}><Sel on={d.hasOffer === true} onClick={() => setD({ ...d, hasOffer: true })}>Yes, I've received a severance offer</Sel><Sel on={d.hasOffer === false} onClick={() => setD({ ...d, hasOffer: false })}>No offer yet</Sel></Fade>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px" }}>{E ? "Your planned offer" : "Your severance offer"}</h2>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>{E ? "If you've drafted a severance package, we'll assess it against the exposure range." : "If you've received a severance package, we'll compare it and draft a response."}</p></Fade>
+    <Fade delay={30}><Sel on={d.hasOffer === true} onClick={() => setD({ ...d, hasOffer: true })}>{E ? "Yes, we have a planned offer" : "Yes, I've received a severance offer"}</Sel><Sel on={d.hasOffer === false} onClick={() => setD({ ...d, hasOffer: false })}>{E ? "No, we need guidance on the amount" : "No offer yet"}</Sel></Fade>
     {d.hasOffer === true && <Fade delay={60}><div style={{ marginTop: 6 }}><Tog opts={[{ v: "amt", l: "$ Amount" }, { v: "wks", l: "Weeks" }, { v: "mos", l: "Months" }]} val={d.offFmt} onChange={v => setD({ ...d, offFmt: v })} />
       {d.offFmt === "amt" && <Fld type="number" value={d.offAmt} onChange={v => setD({ ...d, offAmt: v })} prefix="$" placeholder="e.g. 45000" />}
       {d.offFmt === "wks" && <Fld type="number" value={d.offWks} onChange={v => setD({ ...d, offWks: v })} placeholder="e.g. 12" suffix="weeks" />}
@@ -497,7 +509,7 @@ function S5({ d, setD }) {
       <Sel on={d.deadline === true} onClick={() => setD({ ...d, deadline: true })}>Yes</Sel><Sel on={d.deadline === false} onClick={() => setD({ ...d, deadline: false, deadlineDays: "" })}>No</Sel>
       {d.deadline === true && <Fld label="Days remaining" type="number" value={d.deadlineDays} onChange={v => setD({ ...d, deadlineDays: v })} placeholder="e.g. 7" suffix="days" help="Under 7 days is a red flag." />}
     </div></Fade>}
-    {d.hasOffer === false && <Fade delay={60}><div style={{ marginTop: 6, background: "var(--bg-warning)", borderRadius: 10, padding: "11px 14px", fontSize: 12, color: "var(--text-warning)", lineHeight: 1.45 }}>We'll show you the full range so you're prepared.</div></Fade>}
+    {d.hasOffer === false && <Fade delay={60}><div style={{ marginTop: 6, background: "var(--bg-warning)", borderRadius: 10, padding: "11px 14px", fontSize: 12, color: "var(--text-warning)", lineHeight: 1.45 }}>{E ? "We'll show you the full exposure range so you can structure a defensible package." : "We'll show you the full range so you're prepared."}</div></Fade>}
   </div>;
 }
 
@@ -788,7 +800,7 @@ function buildMemo(r) {
 }
 
 /* ═══════════════════ RESULTS ═══════════════════ */
-function Res({ res, onReset, dark, setDark }) {
+function Res({ res, onReset, dark, setDark, mode }) {
   const [eml, setEml] = useState(false);
   const [lrpt, setLrpt] = useState(false);
   const [chk, setChk] = useState(false);
@@ -982,10 +994,15 @@ function Res({ res, onReset, dark, setDark }) {
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}><Logo size={18} color="#fff" /><span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span></div>
         <button onClick={() => setDark(!dark)} style={{ background: "rgba(255,255,255,.12)", border: "none", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 13, lineHeight: 1, color: "#fff" }}>{dark ? "\u2600" : "\u263E"}</button>
       </div>
-      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px", color: "#fff" }}>Your analysis</h2>
+      <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px", color: "#fff" }}>{mode === "employer" ? "Exposure analysis" : "Your analysis"}</h2>
       <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", margin: 0 }}>{res.pn} {"\u2014"} {res.jt || res.rl}, age {res.age}, {res.yrs}y</p>
     </div>
     <div style={{ background: "var(--bg-warning)", padding: "6px 16px", marginBottom: 12, borderRadius: "0 0 8px 8px", display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 10, color: "var(--text-warning)" }}>{"\u2696"}</span><span style={{ fontSize: 10, color: "var(--text-warning)" }}>For informational purposes only. Not legal advice.</span></div>
+
+    {mode === "employer" && <Fade delay={15}><div style={{ background: "rgba(10,107,92,.06)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1.5px solid rgba(10,107,92,.15)" }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: T, margin: "0 0 4px" }}>Employer view</p>
+      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: 0, lineHeight: 1.5 }}>This analysis shows your potential exposure if the employee challenges the termination. The "court award" figures represent what a court would likely order, not what you must offer. A well-structured package between the statutory floor and the court midpoint typically prevents litigation. Consult employment counsel before finalizing any termination.</p>
+    </div></Fade>}
 
     {res.sr && <Fade delay={20}><div style={{ background: "rgba(216,90,48,.08)", borderRadius: 10, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "var(--text-alert-dark)", lineHeight: 1.45 }}><strong>{"\u26A0"} You signed a release.</strong> Consult a lawyer urgently. Releases can sometimes be set aside.</div></Fade>}
     {asmnt && <Fade delay={35}><div style={{ background: asmnt.bg, borderRadius: 11, padding: "13px 15px", marginBottom: 10, display: "flex", gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 7, background: asmnt.c, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", fontSize: 14, fontWeight: 700 }}>{asmnt.i}</div><div><p style={{ fontSize: 12.5, fontWeight: 600, color: asmnt.c, margin: "0 0 2px" }}>{asmnt.l}</p><p style={{ fontSize: 11.5, color: "var(--text-sec)", margin: 0, lineHeight: 1.4 }}>{asmnt.d}</p></div></div></Fade>}
@@ -1004,10 +1021,10 @@ function Res({ res, onReset, dark, setDark }) {
     </div></Fade>}
 
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 10 }}>
-      <MC l={"Legal floor"} v={$(res.esaAmt)} s={<Whats tip="Every province sets a bare minimum your employer must pay. This is the absolute floor \u2014 your employer cannot legally offer less than this.">{res.totW + " weeks (statutory minimum)"}</Whats>} delay={55} />
-      <MC l={"What a court would likely award"} v={$(res.cMA)} s={<Whats tip="When courts decide severance cases, they consider your age, how long you worked there, your role, and how easy it is to find a similar job. This is called 'common law reasonable notice'. It's almost always higher than the statutory minimum.">{res.cM + " months (common law mid)"}</Whats>} a delay={70} />
+      <MC l={mode === "employer" ? "Statutory minimum" : "Legal floor"} v={$(res.esaAmt)} s={<Whats tip={mode === "employer" ? "The absolute minimum you must pay under the statute. Offering less than this exposes you to an employment standards complaint." : "Every province sets a bare minimum your employer must pay. This is the absolute floor \u2014 your employer cannot legally offer less than this."}>{res.totW + " weeks (statutory minimum)"}</Whats>} delay={55} />
+      <MC l={mode === "employer" ? "Court exposure (mid)" : "What a court would likely award"} v={$(res.cMA)} s={<Whats tip={mode === "employer" ? "If the employee sues for wrongful dismissal, this is the midpoint of what a court would likely award based on the Bardal factors. Offering at or near this amount typically prevents litigation." : "When courts decide severance cases, they consider your age, how long you worked there, your role, and how easy it is to find a similar job. This is called 'common law reasonable notice'. It's almost always higher than the statutory minimum."}>{res.cM + " months (common law mid)"}</Whats>} a delay={70} />
       <MC l="Court award range" v={res.cL + "\u2013" + res.cH + " mo"} s={$(res.cLA) + "\u2013" + $(res.cHA)} delay={85} />
-      {res.off !== null ? <MC l="Your offer" v={$(res.off)} s={res.offMo + " mo equiv."} delay={100} /> : <MC l="Monthly comp" v={$(res.mo)} delay={100} />}
+      {res.off !== null ? <MC l={mode === "employer" ? "Planned offer" : "Your offer"} v={$(res.off)} s={res.offMo + " mo equiv."} delay={100} /> : <MC l="Monthly comp" v={$(res.mo)} delay={100} />}
     </div>
 
     <Fade delay={115}><div style={CD}><p style={SL}>Comparison</p><BViz bars={bars} /></div></Fade>
@@ -1021,8 +1038,36 @@ function Res({ res, onReset, dark, setDark }) {
     {/* TERRITORY NOTE */}
     {res.tr && <Fade delay={122}><div style={{ background: "var(--bg-warning)", borderRadius: 10, padding: "11px 14px", marginBottom: 10, fontSize: 11, color: "var(--text-warning)", lineHeight: 1.45 }}>Territorial case law on reasonable notice is limited compared to provincial jurisdictions. Courts in the territories generally apply Bardal factors, but with fewer local precedents to draw from. An employment lawyer familiar with your territory can give you the sharpest estimate.</div></Fade>}
 
-    {/* NEGOTIATION EMAIL */}
-    <Fade delay={130}><div style={{ ...CD, border: "1.5px solid " + T, background: "rgba(10,107,92,.02)" }}>
+    {/* NEGOTIATION EMAIL (employee) / RECOMMENDED PACKAGE (employer) */}
+    {mode === "employer" ? <Fade delay={130}><div style={{ ...CD, border: "1.5px solid " + T, background: "rgba(10,107,92,.02)" }}>
+      <p style={{ ...SL, color: T, margin: "0 0 8px" }}>Recommended package structure</p>
+      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 10px", lineHeight: 1.4 }}>A defensible severance package typically includes the following components, calibrated to this employee's profile.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
+        <div style={{ background: "var(--bg-subtle)", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+          <p style={{ fontSize: 8, fontWeight: 600, color: "var(--text-muted)", margin: "0 0 2px", textTransform: "uppercase" }}>Minimum (statutory)</p>
+          <p style={{ fontSize: 15, fontWeight: 500, margin: 0, color: "var(--text)", fontFamily: "Georgia,serif" }}>{res.totW} weeks</p>
+          <p style={{ fontSize: 9, color: "var(--text-dim)", margin: "1px 0 0" }}>{$(res.esaAmt)}</p>
+        </div>
+        <div style={{ background: "rgba(10,107,92,.04)", borderRadius: 8, padding: "10px 12px", textAlign: "center", border: "1px solid rgba(10,107,92,.12)" }}>
+          <p style={{ fontSize: 8, fontWeight: 600, color: T, margin: "0 0 2px", textTransform: "uppercase" }}>Recommended</p>
+          <p style={{ fontSize: 15, fontWeight: 500, margin: 0, color: T, fontFamily: "Georgia,serif" }}>{res.cM} months</p>
+          <p style={{ fontSize: 9, color: "var(--text-dim)", margin: "1px 0 0" }}>{$(res.cMA)}</p>
+        </div>
+      </div>
+      {[
+        "Lump-sum payment or salary continuation of " + res.cM + " months' total compensation (" + $(res.cMA) + ")",
+        (res.bens || []).length > 0 ? "Benefits continuation for the notice period, or a lump-sum equivalent" : null,
+        res.bonus > 0 ? "Pro-rated bonus for the current year" : null,
+        res.vd > 0 ? "Vacation payout: " + res.vd + " days (" + $(res.vp) + ") — this is owed regardless" : null,
+        "A mutual release of claims in exchange for the above",
+        "Positive or neutral reference letter",
+        res.nc ? "Consider releasing non-compete in exchange for cooperation on transition" : null,
+      ].filter(Boolean).map((item, i) => <div key={i} style={{ display: "flex", gap: 6, marginBottom: 4, fontSize: 11, color: "var(--text-sec)", lineHeight: 1.4 }}><span style={{ color: T, flexShrink: 0, fontSize: 10 }}>{"\u2713"}</span><span>{item}</span></div>)}
+      <div style={{ background: "var(--bg-warning)", borderRadius: 7, padding: "8px 11px", marginTop: 10 }}>
+        <p style={{ fontSize: 10.5, color: "var(--text-warning)", margin: 0, lineHeight: 1.45 }}>Offering at or near the court midpoint typically prevents litigation and is more cost-effective than defending a wrongful dismissal claim. Have employment counsel review the package and release before presenting it.</p>
+      </div>
+    </div></Fade>
+    : <Fade delay={130}><div style={{ ...CD, border: "1.5px solid " + T, background: "rgba(10,107,92,.02)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><p style={{ ...SL, color: T, margin: 0 }}>{"\u2709"} Negotiation letter</p><button onClick={() => setEml(!eml)} style={{ background: "rgba(10,107,92,.08)", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11, color: T, fontWeight: 500, cursor: "pointer" }}>{eml ? "Hide \u25B2" : "View \u25BC"}</button></div>
       <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
         <span style={{ fontSize: 9, fontWeight: 600, color: email.tone === "aggressive" ? "var(--text-alert)" : email.tone === "firm" ? "#854F0B" : email.tone === "strategic" ? T : "var(--text-sec)", textTransform: "uppercase", letterSpacing: ".04em", padding: "3px 7px", borderRadius: 4, background: email.tone === "aggressive" ? "rgba(153,60,29,.08)" : email.tone === "firm" ? "rgba(133,79,11,.08)" : email.tone === "strategic" ? "rgba(10,107,92,.06)" : "var(--bg-muted)" }}>{email.label}</span>
@@ -1032,16 +1077,52 @@ function Res({ res, onReset, dark, setDark }) {
         <p style={{ fontSize: 10.5, color: "var(--text-warning)", margin: 0, lineHeight: 1.45 }}><strong>Important:</strong> If you plan to hire a lawyer, share this analysis with them and let them handle the communication. A lawyer will position your case more strategically than a self-sent letter. If you are negotiating on your own, this gives you a strong starting point, but understand that once you put a number on the table, that becomes your anchor.</p>
       </div>
       {eml && <div style={{ marginTop: 8 }}><pre style={{ background: "var(--bg-subtle)", borderRadius: 7, padding: "12px 14px", fontSize: 11, lineHeight: 1.5, color: "var(--text)", whiteSpace: "pre-wrap", wordBreak: "break-word", border: "1px solid var(--border-light)", fontFamily: "Georgia,serif", margin: "0 0 7px" }}>{email.text}</pre><button onClick={() => copy(email.text, "e")} style={{ background: T, color: "#fff", border: "none", borderRadius: 7, padding: "8px", fontSize: 12, fontWeight: 500, cursor: "pointer", width: "100%" }}>{cp === "e" ? "\u2713 Copied" : "Copy to clipboard"}</button></div>}
-    </div></Fade>
+    </div></Fade>}
 
-    {/* STRATEGY MEMO */}
+    {/* STRATEGY MEMO (employee) / COMPLIANCE GUIDE (employer) */}
     <Fade delay={140}><div style={{ ...CD, border: "2px solid " + T, background: "rgba(10,107,92,.02)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <p style={{ ...SL, color: T, margin: 0 }}>{"\uD83C\uDFAF"} Your strategy memo</p>
-        <button onClick={() => { setMemo(!memo); if (!memo) trk("memo_viewed"); }} style={{ background: "rgba(10,107,92,.08)", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11, color: T, fontWeight: 500, cursor: "pointer" }}>{memo ? "Hide \u25B2" : "Read \u25BC"}</button>
+        <p style={{ ...SL, color: T, margin: 0 }}>{mode === "employer" ? "\uD83D\uDEE1 Compliance guide" : "\uD83C\uDFAF Your strategy memo"}</p>
+        <button onClick={() => { setMemo(!memo); if (!memo) trk("memo_viewed", { mode }); }} style={{ background: "rgba(10,107,92,.08)", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11, color: T, fontWeight: 500, cursor: "pointer" }}>{memo ? "Hide \u25B2" : "Read \u25BC"}</button>
       </div>
-      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0, lineHeight: 1.4 }}>A personalized guide to your severance negotiation. What to say, what not to say, and when to say it.</p>
-      {memo && (() => { const blocks = buildMemo(res); return <div style={{ marginTop: 12 }}>
+      <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0, lineHeight: 1.4 }}>{mode === "employer" ? "Risk flags, legal requirements, and best practices for this termination." : "A personalized guide to your severance negotiation. What to say, what not to say, and when to say it."}</p>
+      {memo && (() => {
+        if (mode === "employer") {
+          const flags = [];
+          if (res.ujd) flags.push({ t: "Unjust dismissal exposure", body: "This employee may have access to an unjust dismissal claim under " + res.ujd.statute + ". This is a separate legal avenue that can result in reinstatement or compensation beyond severance. Before proceeding, ensure you have documented business reasons for the termination and consult employment counsel about this specific risk." });
+          if (res.bf) flags.push({ t: "Bad faith conduct risk", body: "You indicated the termination involved conduct that may be considered bad faith. Courts award additional damages for humiliation, dishonesty, or callous behaviour during the termination process. Even if the severance package is adequate, the manner of dismissal can create a separate claim. Ensure the termination meeting is respectful, private, and allows the employee adequate time to process." });
+          if (res.ind) flags.push({ t: "Inducement risk", body: "This employee was recruited away from a stable position. Courts treat this as a significant aggravating factor. Even with short tenure, the notice period will be substantially higher than it would otherwise be. Factor this into the package — a short-tenure employee who was induced can receive 12+ months of notice." });
+          if (res.ci && res.ci.m < 1 && res.prov === "ON") flags.push({ t: "Waksdale exposure (Ontario)", body: "The employment contract contains a termination clause, but post-Waksdale, many such clauses are unenforceable. If any part of the termination provision fails to meet ESA minimums, the entire clause may be void, entitling the employee to full common law notice. Have your employment lawyer review the specific clause before relying on it." });
+          if (res.reason === "fc") flags.push({ t: "For-cause risk", body: "You are terminating for cause. The burden of proof is entirely on you. Courts reject the majority of for-cause terminations. If cause is not established, you will owe full common law notice plus potentially additional damages for bad faith if the allegation was unfounded. Ensure you have comprehensive documentation of the conduct, progressive discipline records, and that the termination is proportional." });
+          if (res.nc) flags.push({ t: "Non-compete enforceability", body: "A non-compete or non-solicitation clause is in place. Many restrictive covenants are unenforceable in Canada. Attempting to enforce an unreasonable restriction can backfire and be used as leverage by the employee in severance negotiations. Consider releasing the restriction in exchange for cooperation on transition." });
+
+          const guide = [];
+          guide.push({ t: "Termination meeting best practices", body: "Hold the meeting in a private setting with two company representatives present. Prepare a brief script. State the decision clearly and without ambiguity. Do not negotiate in the meeting. Provide the termination letter and severance offer in writing. Allow the employee to leave with dignity. Give a reasonable deadline to review the offer (minimum 7 days; 14+ is standard).\n\nDo not escort the employee out publicly. Do not disable their access before the meeting. Do not announce the termination to the team before speaking to the employee. Any of these can constitute bad faith and increase your exposure." });
+          guide.push({ t: "Document preparation", body: "Before the termination meeting, prepare:\n\u2022 Termination letter stating the effective date and reason (without cause is safest unless you have strong documentation for cause)\n\u2022 Severance offer letter with the proposed package\n\u2022 Full and final release of claims — have employment counsel draft this\n\u2022 Benefits continuation details or COBRA-equivalent information\n\u2022 ROE (Record of Employment) — must be issued within 5 days\n\u2022 Final pay calculation including accrued vacation\n\u2022 Information about any equity, stock options, or RSU treatment" });
+          guide.push({ t: "Release requirements", body: "A release is only enforceable if the employee receives adequate consideration (the severance must exceed statutory minimums), has adequate time to review (minimum 7 days), and is advised to seek independent legal counsel. A release signed under duress, without adequate time, or for less than statutory minimums can be set aside. Do not pressure the employee to sign in the meeting." });
+          guide.push({ t: "Cost of litigation vs. settlement", body: "Defending a wrongful dismissal claim typically costs $15,000\u2013$50,000+ in legal fees, takes 12\u201324 months, and creates uncertainty. Offering a package at or near the court midpoint (" + $(res.cMA) + ") almost always costs less than litigation, resolves faster, and eliminates the risk of a higher court award plus costs." });
+
+          const blocks = [...flags, ...guide];
+          return <div style={{ marginTop: 12 }}>
+            <div style={{ background: "var(--bg-warning)", borderRadius: 8, padding: "10px 12px", marginBottom: 14, border: "1px solid var(--border-warning)" }}>
+              <p style={{ fontSize: 10.5, color: "var(--text-warning)", margin: 0, lineHeight: 1.5 }}>This guide is for informational purposes only. It is not legal advice and does not create a solicitor-client relationship. Consult qualified employment counsel before proceeding with any termination.</p>
+            </div>
+            {flags.length > 0 && <div style={{ background: "rgba(216,90,48,.05)", borderRadius: 10, padding: "12px 14px", marginBottom: 14, border: "1px solid rgba(216,90,48,.1)" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text-alert)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: ".03em" }}>{"\u26A0"} {flags.length} risk flag{flags.length > 1 ? "s" : ""} identified</p>
+              <p style={{ fontSize: 10.5, color: "var(--text-sec)", margin: 0, lineHeight: 1.4 }}>Review each flag below before proceeding. These increase your legal exposure.</p>
+            </div>}
+            {blocks.map((b, i) => <div key={i} style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: i < flags.length ? "var(--text-alert)" : T, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: ".03em" }}>{b.t}</p>
+              {b.body.split("\n\n").map((para, j) => <p key={j} style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 8px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{para}</p>)}
+            </div>)}
+            <button onClick={() => {
+              const txt = blocks.map(b => b.t.toUpperCase() + "\n\n" + b.body).join("\n\n" + "\u2500".repeat(40) + "\n\n");
+              copy(txt, "memo");
+            }} style={{ background: T, color: "#fff", border: "none", borderRadius: 7, padding: "8px", fontSize: 12, fontWeight: 500, cursor: "pointer", width: "100%" }}>{cp === "memo" ? "\u2713 Copied" : "Copy compliance guide"}</button>
+          </div>;
+        }
+
+        const blocks = buildMemo(res); return <div style={{ marginTop: 12 }}>
         <div style={{ background: "var(--bg-warning)", borderRadius: 8, padding: "10px 12px", marginBottom: 14, border: "1px solid var(--border-warning)" }}>
           <p style={{ fontSize: 10.5, color: "var(--text-warning)", margin: 0, lineHeight: 1.5 }}>This memo is generated from the information you provided and is for informational purposes only. It is not legal advice, does not create a solicitor-client relationship, and should not be relied upon as a substitute for independent legal counsel. A qualified employment lawyer may assess your situation differently.</p>
         </div>
@@ -1249,41 +1330,42 @@ function Res({ res, onReset, dark, setDark }) {
 
 /* ═══════════════════ APP ═══════════════════ */
 const EMPTY = { province: "", age: "", years: "", months: "", salary: "", bonus: "", role: "", jobTitle: "", sevElig: false, hasOffer: null, offFmt: "amt", offAmt: "", offWks: "", offMos: "", reason: "", induced: null, hasContract: null, contractTerms: false, contractAge: "", bens: [], industry: "", vacDays: "", signedRelease: null, deadline: null, deadlineDays: "", hasDependents: null, badFaith: null, newJob: "", nonCompete: null };
-function loadSession() { try { const s = sessionStorage.getItem("p_state"); if (s) { const p = JSON.parse(s); return { step: p.step ?? -1, d: { ...EMPTY, ...p.d } }; } } catch {} return null; }
-function saveSession(step, d) { try { sessionStorage.setItem("p_state", JSON.stringify({ step, d })); } catch {} }
+function loadSession() { try { const s = sessionStorage.getItem("p_state"); if (s) { const p = JSON.parse(s); return { step: p.step ?? -1, d: { ...EMPTY, ...p.d }, mode: p.mode ?? "employee" }; } } catch {} return null; }
+function saveSession(step, d, mode) { try { sessionStorage.setItem("p_state", JSON.stringify({ step, d, mode })); } catch {} }
 
 function trk(e, p) { try { if (window.gtag) window.gtag("event", e, p); } catch {} }
 
 export default function App() {
   const saved = useMemo(() => loadSession(), []);
   const [step, setStep] = useState(saved ? saved.step : -1);
+  const [mode, setMode] = useState(saved ? saved.mode : "employee");
   const [dark, setDark] = useState(() => window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const [d, setD] = useState(saved ? saved.d : EMPTY);
   const [res, setRes] = useState(null);
   const [fade, setFade] = useState(false);
 
-  useEffect(() => { if (step >= 1 && step <= 5) saveSession(step, d); }, [step, d]);
+  useEffect(() => { if (step >= 1 && step <= 5) saveSession(step, d, mode); }, [step, d, mode]);
 
-  function go(s) { setFade(true); setTimeout(() => { if (s === 6) { setRes(calc(d)); trk("analysis_completed", { province: d.province }); } trk("step_completed", { step: s }); setStep(s); window.scrollTo(0, 0); setTimeout(() => setFade(false), 25); }, 150); }
+  function go(s) { setFade(true); setTimeout(() => { if (s === 6) { setRes(calc(d)); trk("analysis_completed", { province: d.province, mode }); } trk("step_completed", { step: s, mode }); setStep(s); window.scrollTo(0, 0); setTimeout(() => setFade(false), 25); }, 150); }
 
   const tenure = (parseFloat(d.years) || 0) + (parseFloat(d.months) || 0) / 12;
   const ok = step <= 0 ? true : step === 1 ? !!d.province : step === 2 ? !!(d.age && (d.years || d.months) && d.salary && d.role) : step === 3 ? !!(d.reason && (tenure >= 3 || d.induced !== null) && d.hasContract !== null) : step === 4 ? true : step === 5 ? d.hasOffer !== null && (d.hasOffer === false || !!((d.offFmt === "amt" && d.offAmt) || (d.offFmt === "wks" && d.offWks) || (d.offFmt === "mos" && d.offMos))) : false;
 
-  function reset() { setStep(-1); setRes(null); setD(EMPTY); try { sessionStorage.removeItem("p_state"); } catch {} window.scrollTo(0, 0); }
+  function reset() { setStep(-1); setRes(null); setD(EMPTY); setMode("employee"); try { sessionStorage.removeItem("p_state"); } catch {} window.scrollTo(0, 0); }
 
-  if (step === -1) return <><ThemeStyle dark={dark} /><Landing onStart={() => { trk("analysis_started"); setStep(1); }} /></>;
+  if (step === -1) return <><ThemeStyle dark={dark} /><Landing onStart={(m) => { setMode(m || "employee"); trk("analysis_started", { mode: m || "employee" }); setStep(1); }} /></>;
 
   return <><ThemeStyle dark={dark} /><div style={{ minHeight: "100vh", background: "linear-gradient(165deg, var(--bg-page-1) 0%, var(--bg-page-2) 40%, var(--bg-page-3) 100%)", color: "var(--text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif" }}>
     {step > 0 && step < 6 && <TopBar step={step} onBack={() => go(step === 1 ? -1 : step - 1)} dark={dark} setDark={setDark} />}
     {step > 0 && step < 6 && <Dots c={step - 1} t={TS} />}
     <div style={{ opacity: fade ? 0 : 1, transform: fade ? "translateX(8px)" : "translateX(0)", transition: "all .15s ease", paddingTop: step === 6 ? 10 : 8, paddingBottom: step >= 1 && step <= 5 ? 72 : 14 }}>
-      {step === 1 && <S1 d={d} setD={setD} />}
-      {step === 2 && <S2 d={d} setD={setD} />}
-      {step === 3 && <S3 d={d} setD={setD} />}
-      {step === 4 && <S4 d={d} setD={setD} />}
-      {step === 5 && <S5 d={d} setD={setD} />}
-      {step === 6 && res && <Res res={res} onReset={reset} dark={dark} setDark={setDark} />}
+      {step === 1 && <S1 d={d} setD={setD} mode={mode} />}
+      {step === 2 && <S2 d={d} setD={setD} mode={mode} />}
+      {step === 3 && <S3 d={d} setD={setD} mode={mode} />}
+      {step === 4 && <S4 d={d} setD={setD} mode={mode} />}
+      {step === 5 && <S5 d={d} setD={setD} mode={mode} />}
+      {step === 6 && res && <Res res={res} onReset={reset} dark={dark} setDark={setDark} mode={mode} />}
     </div>
-    {step >= 1 && step <= 5 && <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "10px 20px 16px", background: "linear-gradient(transparent, var(--nav-fade) 30%)" }}><div style={{ maxWidth: 430, margin: "0 auto" }}><Btn onClick={() => go(step + 1)} disabled={!ok} full>{step === 5 ? "Analyze my severance \u2192" : "Continue \u2192"}</Btn></div></div>}
+    {step >= 1 && step <= 5 && <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "10px 20px 16px", background: "linear-gradient(transparent, var(--nav-fade) 30%)" }}><div style={{ maxWidth: 430, margin: "0 auto" }}><Btn onClick={() => go(step + 1)} disabled={!ok} full>{step === 5 ? (mode === "employer" ? "Analyze exposure \u2192" : "Analyze my severance \u2192") : "Continue \u2192"}</Btn></div></div>}
   </div></>;
 }
