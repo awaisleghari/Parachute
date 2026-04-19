@@ -158,10 +158,10 @@ const SL = { fontSize: 10, fontWeight: 600, color: "var(--text-sec)", margin: "0
 const CD = { background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border-light)", padding: "15px", marginBottom: 11 };
 
 /* Brand header for step pages */
-function TopBar({ step, onBack, dark, setDark }) {
+function TopBar({ step, onBack, dark, setDark, onLogoClick }) {
   return <div>
     <div style={{ background: "linear-gradient(135deg, #0A6B5C 0%, #085D50 40%, #0B5A65 100%)", padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+      <div onClick={onLogoClick} style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
         <Logo size={18} color="#fff" />
         <span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span>
       </div>
@@ -292,6 +292,20 @@ function Landing({ onStart, onGuides }) {
                 cursor: "pointer", transition: "all .2s cubic-bezier(.25,1,.5,1)",
               }}>I'm letting someone go →</button>
           </div>
+          <div style={{ marginTop: 10, textAlign: "center" }}>
+            <button
+              onMouseEnter={() => setHov("guides")}
+              onMouseLeave={() => setHov(null)}
+              onClick={onGuides}
+              style={{
+                padding: "10px 28px", borderRadius: 60, border: "none",
+                background: "none", color: hov === "guides" ? "rgba(255,255,255,.6)" : "rgba(255,255,255,.35)",
+                fontSize: 13, fontWeight: 500, fontFamily: BF,
+                cursor: "pointer", transition: "all .2s",
+                textDecoration: hov === "guides" ? "underline" : "none",
+                textUnderlineOffset: "3px",
+              }}>Read our severance guides by province</button>
+          </div>
         </div>
         : <div style={{ maxWidth: 480, margin: "0 auto", background: "rgba(0,0,0,.35)", borderRadius: 20, padding: "24px", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,.08)", textAlign: "left" }}>
           <p style={{ fontSize: 17, fontWeight: 700, margin: "0 0 4px" }}>Terms of Use & Disclaimer</p>
@@ -358,16 +372,6 @@ function Landing({ onStart, onGuides }) {
           </div>)}
         </div>
       </div>
-    </div>
-
-    {/* ─── RESOURCES LINK ─── */}
-    <div style={{ position: "relative", zIndex: 1, padding: "0 28px 24px", textAlign: "center" }}>
-      <button onClick={onGuides} style={{ background: "none", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12, padding: "14px 28px", cursor: "pointer", transition: "all .2s" }}
-        onMouseEnter={e => { e.target.style.background = "rgba(255,255,255,.04)"; e.target.style.borderColor = "rgba(255,255,255,.15)"; }}
-        onMouseLeave={e => { e.target.style.background = "none"; e.target.style.borderColor = "rgba(255,255,255,.1)"; }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,.7)", margin: "0 0 3px", fontFamily: BF }}>Severance guides by province</p>
-        <p style={{ fontSize: 12, color: "rgba(255,255,255,.35)", margin: 0, fontFamily: BF }}>Statutory minimums, common law notice, and your rights — explained in plain English.</p>
-      </button>
     </div>
 
     {/* ─── TRUST FOOTER ─── */}
@@ -908,7 +912,7 @@ function buildMemo(r) {
 }
 
 /* ═══════════════════ RESULTS ═══════════════════ */
-function Res({ res, onReset, dark, setDark, mode }) {
+function Res({ res, onReset, dark, setDark, mode, onLogoClick }) {
   const [eml, setEml] = useState(false);
   const [lrpt, setLrpt] = useState(false);
   const [chk, setChk] = useState(false);
@@ -1097,7 +1101,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
     {/* Header */}
     <div style={{ background: "linear-gradient(135deg, #0A6B5C 0%, #085D50 40%, #0B5A65 100%)", margin: "-10px -20px 0", padding: "14px 20px 16px", borderRadius: "0 0 16px 16px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}><Logo size={18} color="#fff" /><span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span></div>
+        <div onClick={onLogoClick} style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}><Logo size={18} color="#fff" /><span style={{ fontSize: 13, fontWeight: 500, color: "#fff" }}>Parachute</span></div>
         <button onClick={() => setDark(!dark)} style={{ background: "rgba(255,255,255,.12)", border: "none", borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 13, lineHeight: 1, color: "#fff" }}>{dark ? "\u2600" : "\u263E"}</button>
       </div>
       <h2 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, margin: "0 0 3px", color: "#fff" }}>{mode === "employer" ? "Exposure analysis" : "Your analysis"}</h2>
@@ -1678,6 +1682,7 @@ export default function App() {
   const [res, setRes] = useState(null);
   const [fade, setFade] = useState(false);
   const [page, setPage] = useState("main");
+  const [showLeave, setShowLeave] = useState(false);
 
   useEffect(() => { if (step >= 1 && step <= 5) saveSession(step, d, mode); }, [step, d, mode]);
 
@@ -1693,7 +1698,7 @@ export default function App() {
   if (step === -1) return <><ThemeStyle dark={dark} /><Landing onStart={(m) => { setMode(m || "employee"); trk("analysis_started", { mode: m || "employee" }); setStep(1); }} onGuides={() => { setPage("guides"); window.scrollTo(0, 0); trk("guides_opened"); }} /></>;
 
   return <><ThemeStyle dark={dark} /><div style={{ minHeight: "100vh", background: "linear-gradient(165deg, var(--bg-page-1) 0%, var(--bg-page-2) 40%, var(--bg-page-3) 100%)", color: "var(--text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif" }}>
-    {step > 0 && step < 6 && <TopBar step={step} onBack={() => go(step === 1 ? -1 : step - 1)} dark={dark} setDark={setDark} />}
+    {step > 0 && step < 6 && <TopBar step={step} onBack={() => go(step === 1 ? -1 : step - 1)} dark={dark} setDark={setDark} onLogoClick={() => setShowLeave(true)} />}
     {step > 0 && step < 6 && <Dots c={step - 1} t={TS} />}
     <div style={{ opacity: fade ? 0 : 1, transform: fade ? "translateX(8px)" : "translateX(0)", transition: "all .15s ease", paddingTop: step === 6 ? 10 : 8, paddingBottom: step >= 1 && step <= 5 ? 72 : 14 }}>
       {step === 1 && <S1 d={d} setD={setD} mode={mode} />}
@@ -1701,8 +1706,21 @@ export default function App() {
       {step === 3 && <S3 d={d} setD={setD} mode={mode} />}
       {step === 4 && <S4 d={d} setD={setD} mode={mode} />}
       {step === 5 && <S5 d={d} setD={setD} mode={mode} />}
-      {step === 6 && res && <Res res={res} onReset={reset} dark={dark} setDark={setDark} mode={mode} />}
+      {step === 6 && res && <Res res={res} onReset={reset} dark={dark} setDark={setDark} mode={mode} onLogoClick={() => setShowLeave(true)} />}
     </div>
     {step >= 1 && step <= 5 && <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "10px 20px 16px", background: "linear-gradient(transparent, var(--nav-fade) 30%)" }}><div style={{ maxWidth: 430, margin: "0 auto" }}><Btn onClick={() => go(step + 1)} disabled={!ok} full>{step === 5 ? (mode === "employer" ? "Analyze exposure \u2192" : "Analyze my severance \u2192") : "Continue \u2192"}</Btn></div></div>}
+
+    {/* Leave confirmation modal */}
+    {showLeave && <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={() => setShowLeave(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }} />
+      <div style={{ position: "relative", background: "var(--bg-card)", borderRadius: 16, padding: "24px", maxWidth: 340, width: "100%", border: "1px solid var(--border-light)", boxShadow: "0 16px 48px rgba(0,0,0,.2)" }}>
+        <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text)", margin: "0 0 8px" }}>Leave this analysis?</p>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 20px", lineHeight: 1.5 }}>You'll return to the home page. Your current progress will not be saved.</p>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setShowLeave(false)} style={{ flex: 1, padding: "11px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--bg-card)", color: "var(--text-sec)", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Stay here</button>
+          <button onClick={() => { setShowLeave(false); reset(); }} style={{ flex: 1, padding: "11px", borderRadius: 10, border: "none", background: "#0A6B5C", color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Yes, go home</button>
+        </div>
+      </div>
+    </div>}
   </div></>;
 }
