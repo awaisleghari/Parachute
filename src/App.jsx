@@ -7,7 +7,7 @@ const PROVS = {
   BC: { n: "British Columbia", esa: "Employment Standards Act, RSBC 1996", tw: y => y < .25 ? 0 : y < 1 ? 1 : y < 3 ? 2 : Math.min(Math.floor(y), 8), sw: () => 0, hs: false, kc: "Bardal v. Globe & Mail Ltd." },
   AB: { n: "Alberta", esa: "Employment Standards Code, RSA 2000", tw: y => y < .25 ? 0 : y < 2 ? 1 : y < 4 ? 2 : y < 6 ? 4 : y < 8 ? 5 : y < 10 ? 6 : 8, sw: () => 0, hs: false, kc: "Bardal factors" },
   FED: { n: "Federal (CLC)", esa: "Canada Labour Code, Part III", tw: y => y >= 1 ? 2 : 0, sw: y => y >= 1 ? Math.max(Math.round(y * 5 / 7), 2) : 0, hs: true, sn: "Under the Canada Labour Code, federally regulated employees get both termination pay and severance pay after 12 months.", kc: "s. 240 CLC" },
-  QC: { n: "Quebec", esa: "Act respecting labour standards", tw: y => y < .25 ? 0 : y < 1 ? 1 : y < 5 ? 2 : y < 10 ? 4 : 8, sw: () => 0, hs: false, kc: "Civil law principles" },
+  QC: { n: "Quebec", esa: "Act respecting labour standards", tw: y => y < .25 ? 0 : y < 1 ? 1 : y < 5 ? 2 : y < 10 ? 4 : 8, sw: () => 0, hs: false, kc: "Civil Code of Québec, art. 2091", civil: true, sn: "Quebec operates under civil law, not common law. The \"reasonable notice\" concept exists under art. 2091 of the Civil Code, but courts apply different factors and precedents than common law provinces. The estimates below use comparable civil law jurisprudence, but a Quebec employment lawyer should be consulted for precise analysis." },
   SK: { n: "Saskatchewan", esa: "Saskatchewan Employment Act", tw: y => y < .25 ? 0 : y < 3 ? Math.min(Math.floor(y), 2) : y < 5 ? Math.min(Math.floor(y), 4) : y < 10 ? Math.min(Math.floor(y), 6) : 8, sw: () => 0, hs: false, kc: "Bardal principles" },
   MB: { n: "Manitoba", esa: "Employment Standards Code", tw: y => y < .25 ? 0 : y < 3 ? Math.min(Math.floor(y), 2) : y < 5 ? 4 : y < 10 ? 6 : 8, sw: () => 0, hs: false, kc: "Bardal principles" },
   NS: { n: "Nova Scotia", esa: "Labour Standards Code", tw: y => y < .25 ? 0 : y < 2 ? 1 : y < 5 ? 2 : y < 10 ? 4 : 8, sw: () => 0, hs: false, kc: "Bardal factors" },
@@ -59,9 +59,10 @@ function calc(d) {
   const a = parseInt(d.age) || 30, s = parseFloat(d.salary) || 0, b = parseFloat(d.bonus) || 0, tc = s + b;
   const wk = tc / 52, tw = p.tw(yrs), sw = p.sw(yrs, d.sevElig), totW = tw + sw;
   const am = aMod(a), mo = tc / 12, ind = d.induced && yrs < 3 ? (yrs < 1 ? 1.25 : yrs < 2 ? 1.18 : 1.10) : 1, ci = cRisk(d), bf = d.badFaith ? 1.1 : 1;
-  const cL = Math.min(Math.max(yrs * r.mL * am.l * ind * ci.m * bf, 1), 26);
-  const cM = Math.min(Math.max(yrs * r.mM * am.m * ind * ci.m * bf, 1), 26);
-  const cH = Math.min(Math.max(yrs * r.mH * am.h * ind * bf, 2), 26);
+  const sal_t = tc >= 400000 ? 1.12 : tc >= 300000 ? 1.06 : 1;
+  const cL = Math.min(Math.max(yrs * r.mL * am.l * ind * ci.m * bf * sal_t, 1), 26);
+  const cM = Math.min(Math.max(yrs * r.mM * am.m * ind * ci.m * bf * sal_t, 1), 26);
+  const cH = Math.min(Math.max(yrs * r.mH * am.h * ind * bf * sal_t, 2), 26);
   let off = null;
   if (d.hasOffer) { if (d.offFmt === "amt") off = parseFloat(d.offAmt) || 0; else if (d.offFmt === "wks") off = (parseFloat(d.offWks) || 0) * wk; else off = (parseFloat(d.offMos) || 0) * mo; }
   const vd = parseFloat(d.vacDays) || 0;
@@ -69,8 +70,8 @@ function calc(d) {
   let ujd = null;
   if (d.province === "FED" && yrs >= 1) ujd = { statute: "Canada Labour Code, s. 240", threshold: "12 months", remedy: "Federally regulated employees with 12+ months of continuous service can file an unjust dismissal complaint. Remedies may include reinstatement to the position and compensation for lost wages. This is a separate avenue from the severance entitlements above and may be more favourable. Strict time limits apply. Consult a lawyer promptly." };
   if (d.province === "QC" && yrs >= 2) ujd = { statute: "Act respecting labour standards, s. 124", threshold: "2 years", remedy: "Quebec employees with 2+ years of continuous service who believe they were dismissed without good and sufficient cause can file a complaint. Remedies may include reinstatement and compensation. Note that Quebec operates under civil law, and common law reasonable notice principles may apply differently. Consult a lawyer familiar with Quebec employment law." };
-  if (d.province === "NS" && yrs >= 10) ujd = { statute: "Labour Standards Code, s. 71", threshold: "10 years", remedy: "Nova Scotia employees with 10+ years of continuous service have access to an unjust dismissal provision. Remedies may include reinstatement or compensation. This is in addition to your standard termination entitlements. Consult a lawyer to assess whether this applies to your situation." };
-  return { pn: p.n, esa: p.esa, tw, sw, totW, esaAmt: Math.round(totW * wk), wk: Math.round(wk), cL: Math.round(cL * 10) / 10, cM: Math.round(cM * 10) / 10, cH: Math.round(cH * 10) / 10, cLA: Math.round(cL * mo), cMA: Math.round(cM * mo), cHA: Math.round(cH * mo), off, offMo: off !== null && mo > 0 ? Math.round(off / mo * 10) / 10 : null, mo: Math.round(mo), hs: p.hs, sn: p.sn, kc: p.kc, sal: s, bonus: b, tc, yrs: Math.round(yrs * 10) / 10, age: a, rl: r.l, ind: d.induced && yrs < 3, indPct, ci, reason: d.reason, bens: d.bens || [], jt: d.jobTitle, industry: d.industry, sr: d.signedRelease, dl: d.deadline, dlDays: d.deadlineDays, prov: d.province, vd, vp: Math.round(vd * (s / 260)), bf: d.badFaith, newJob: d.newJob, nc: d.nonCompete, hasContract: d.hasContract, contractAge: d.contractAge, tr: !!p.tr, ujd, empDocLevel: d.empDocLevel, empHR: d.empHumanRights, empGroup: d.empGroupTerm, empTermStatus: d.empTermStatus };
+  if (d.province === "NS" && yrs >= 10) { const mgmt = d.role === "mgmt" || d.role === "exec"; ujd = { statute: "Labour Standards Code, s. 71", threshold: "10 years", remedy: "Nova Scotia employees with 10+ years of continuous service have access to an unjust dismissal provision. Remedies may include reinstatement or compensation. This is in addition to your standard termination entitlements." + (mgmt ? " Note: employees in a managerial or supervisory capacity may be excluded from this provision. Consult a lawyer to confirm whether the exemption applies to your role." : " Consult a lawyer to assess whether this applies to your situation.") }; }
+  return { pn: p.n, esa: p.esa, tw, sw, totW, esaAmt: Math.round(totW * wk), wk: Math.round(wk), cL: Math.round(cL * 10) / 10, cM: Math.round(cM * 10) / 10, cH: Math.round(cH * 10) / 10, cLA: Math.round(cL * mo), cMA: Math.round(cM * mo), cHA: Math.round(cH * mo), off, offMo: off !== null && mo > 0 ? Math.round(off / mo * 10) / 10 : null, mo: Math.round(mo), hs: p.hs, sn: p.sn, kc: p.kc, sal: s, bonus: b, tc, yrs: Math.round(yrs * 10) / 10, age: a, rl: r.l, ind: d.induced && yrs < 3, indPct, ci, reason: d.reason, bens: d.bens || [], jt: d.jobTitle, industry: d.industry, sr: d.signedRelease, dl: d.deadline, dlDays: d.deadlineDays, prov: d.province, vd, vp: Math.round(vd * (s / 260)), bf: d.badFaith, newJob: d.newJob, nc: d.nonCompete, hasContract: d.hasContract, contractAge: d.contractAge, tr: !!p.tr, ujd, empDocLevel: d.empDocLevel, empHR: d.empHumanRights, empGroup: d.empGroupTerm, empTermStatus: d.empTermStatus, civil: !!p.civil, salTier: sal_t > 1 };
 }
 const $ = n => new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(n);
 const T = "#0A6B5C", Td = "#085041", Tl = "#9FE1CB";
@@ -188,7 +189,7 @@ function Logo({ size = 32, color = "#fff" }) {
 }
 
 /* ═══════════════════ LANDING ═══════════════════ */
-function Landing({ onStart }) {
+function Landing({ onStart, onGuides }) {
   const [agreed, setAgreed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [curMode, setCurMode] = useState("employee");
@@ -357,6 +358,16 @@ function Landing({ onStart }) {
           </div>)}
         </div>
       </div>
+    </div>
+
+    {/* ─── RESOURCES LINK ─── */}
+    <div style={{ position: "relative", zIndex: 1, padding: "0 28px 24px", textAlign: "center" }}>
+      <button onClick={onGuides} style={{ background: "none", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12, padding: "14px 28px", cursor: "pointer", transition: "all .2s" }}
+        onMouseEnter={e => { e.target.style.background = "rgba(255,255,255,.04)"; e.target.style.borderColor = "rgba(255,255,255,.15)"; }}
+        onMouseLeave={e => { e.target.style.background = "none"; e.target.style.borderColor = "rgba(255,255,255,.1)"; }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,.7)", margin: "0 0 3px", fontFamily: BF }}>Severance guides by province</p>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,.35)", margin: 0, fontFamily: BF }}>Statutory minimums, common law notice, and your rights — explained in plain English.</p>
+      </button>
     </div>
 
     {/* ─── TRUST FOOTER ─── */}
@@ -739,6 +750,8 @@ function buildLawyerReport(r) {
   if (r.ind) rpt += "     Inducement uplift: +" + r.indPct + "%\n";
   if (r.bf) rpt += "     Bad faith uplift: +10%\n";
   if (r.ci.m < 1) rpt += "     Contract discount: " + Math.round((1 - r.ci.m) * 100) + "% (subject to enforceability review)\n";
+  if (r.salTier) rpt += "     Compensation band uplift: +6-12% (TC exceeds $300,000)\n";
+  if (r.civil) rpt += "     NOTE: Quebec civil law jurisdiction. Art. 2091 C.c.Q. applies.\n";
   if (r.off !== null) {
     rpt += "\n5. OFFER ANALYSIS\n";
     rpt += "   Offer: " + $(r.off) + " (" + r.offMo + " months equivalent)\n";
@@ -1041,7 +1054,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
           <div style={{ height: 8 }} />
           <p style={{ fontSize: 11, color: "var(--text-sec)" }}>
             {"Modifiers: Age=" + (res.age >= 55 ? "High" : res.age >= 45 ? "Mod-high" : res.age >= 35 ? "Moderate" : "Low")}
-            {res.ind && " | Inducement +" + res.indPct + "%"}{res.bf && " | Bad faith +10%"}{res.ci.m < 1 && " | Contract -" + Math.round((1 - res.ci.m) * 100) + "%"}
+            {res.ind && " | Inducement +" + res.indPct + "%"}{res.bf && " | Bad faith +10%"}{res.ci.m < 1 && " | Contract -" + Math.round((1 - res.ci.m) * 100) + "%"}{res.salTier && " | Comp band +6-12%"}
           </p>
         </Sec>
 
@@ -1098,6 +1111,15 @@ function Res({ res, onReset, dark, setDark, mode }) {
     </div></Fade>}
 
     {res.sr && mode !== "employer" && <Fade delay={20}><div style={{ background: "rgba(216,90,48,.08)", borderRadius: 10, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "var(--text-alert-dark)", lineHeight: 1.45 }}><strong>{"\u26A0"} You signed a release.</strong> Consult a lawyer urgently. Releases can sometimes be set aside.</div></Fade>}
+
+    {res.civil && <Fade delay={25}><div style={{ background: "rgba(186,117,23,.06)", borderRadius: 10, padding: "12px 14px", marginBottom: 10, border: "1px solid rgba(186,117,23,.1)" }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-warning)", margin: "0 0 4px" }}>Quebec: civil law jurisdiction</p>
+      <p style={{ fontSize: 11, color: "var(--text-sec)", margin: 0, lineHeight: 1.5 }}>Quebec operates under civil law (Civil Code, art. 2091), not the common law Bardal framework used in other provinces. The estimates below are based on comparable Quebec civil law jurisprudence, but the factors and precedents differ. A Quebec employment lawyer should be consulted for precise analysis.</p>
+    </div></Fade>}
+
+    {res.salTier && <Fade delay={28}><div style={{ background: "rgba(10,107,92,.04)", borderRadius: 10, padding: "12px 14px", marginBottom: 10, border: "1px solid rgba(10,107,92,.1)" }}>
+      <p style={{ fontSize: 11, color: T, margin: 0, lineHeight: 1.5 }}>{mode === "employer" ? "High compensation adjustment applied. Employees earning $300,000+ take significantly longer to find comparable roles, which courts factor into the notice period." : "High compensation adjustment applied. At your compensation level ($300,000+), courts recognize that comparable roles are significantly harder to find, which pushes the notice period higher."}</p>
+    </div></Fade>}
     {asmnt && <Fade delay={35}><div style={{ background: asmnt.bg, borderRadius: 11, padding: "13px 15px", marginBottom: 10, display: "flex", gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 7, background: asmnt.c, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", fontSize: 14, fontWeight: 700 }}>{asmnt.i}</div><div><p style={{ fontSize: 12.5, fontWeight: 600, color: asmnt.c, margin: "0 0 2px" }}>{asmnt.l}</p><p style={{ fontSize: 11.5, color: "var(--text-sec)", margin: 0, lineHeight: 1.4 }}>{asmnt.d}</p></div></div></Fade>}
 
     {res.ujd && <Fade delay={40}><div style={{ background: mode === "employer" ? "rgba(216,90,48,.06)" : "rgba(10,107,92,.05)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: mode === "employer" ? "1.5px solid rgba(216,90,48,.12)" : "1.5px solid rgba(10,107,92,.2)" }}>
@@ -1303,7 +1325,7 @@ function Res({ res, onReset, dark, setDark, mode }) {
             <p style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)", margin: "0 0 4px" }}>Modifiers applied</p>
             <div style={{ fontSize: 11, color: "var(--text-sec)", lineHeight: 1.5 }}>
               {"Age: " + (res.age >= 55 ? "High" : res.age >= 45 ? "Moderate-high" : res.age >= 35 ? "Moderate" : "Low")}
-              {res.ind && " | Inducement: +" + res.indPct + "%"}{res.bf && " | Bad faith: +10%"}{res.ci.m < 1 && " | Contract: -" + Math.round((1 - res.ci.m) * 100) + "% (pending review)"}
+              {res.ind && " | Inducement: +" + res.indPct + "%"}{res.bf && " | Bad faith: +10%"}{res.ci.m < 1 && " | Contract: -" + Math.round((1 - res.ci.m) * 100) + "% (pending review)"}{res.salTier && " | Comp band: +6-12%"}
             </div>
           </div>
 
@@ -1482,6 +1504,164 @@ function Res({ res, onReset, dark, setDark, mode }) {
   </div>;
 }
 
+/* ═══════════════════ GUIDES ═══════════════════ */
+const GUIDE_DATA = [
+  { id: "ON", name: "Ontario", esa: "Employment Standards Act, 2000", table: [["< 1 year","1 week"],["1 year","1 week"],["2 years","2 weeks"],["3 years","3 weeks"],["4 years","4 weeks"],["5 years","5 weeks"],["6 years","6 weeks"],["7 years","7 weeks"],["8+ years","8 weeks (max)"]],
+    sections: [
+      { t: "Ontario severance pay (separate from termination pay)", body: "Ontario is one of the few provinces with a separate severance pay on top of termination pay. You qualify if you have 5+ years of service AND your employer's annual payroll exceeds $2.5 million, or 50+ employees were let go within 6 months.\n\nSeverance pay is one week per year of service, up to 26 weeks. This is in addition to termination pay.\n\nFor example, an employee with 10 years at a qualifying employer receives 8 weeks of termination pay plus 10 weeks of severance pay = 18 weeks statutory minimum." },
+      { t: "Waksdale and termination clauses", body: "Since the 2020 Ontario Court of Appeal decision in Waksdale v. Swegon North America Inc., many employment contract termination clauses have been invalidated. If any part of the termination provision fails to meet ESA minimums, the entire clause may be void, entitling the employee to full common law notice.\n\nThis is a significant vulnerability for employers and a strong leverage point for employees. If your contract was signed or amended after 2020, have a lawyer review the termination clause carefully." },
+    ]},
+  { id: "BC", name: "British Columbia", esa: "Employment Standards Act, RSBC 1996", table: [["< 3 months","None"],["3\u201312 months","1 week"],["1\u20133 years","2 weeks"],["3 years","3 weeks"],["4 years","4 weeks"],["5 years","5 weeks"],["6 years","6 weeks"],["7 years","7 weeks"],["8+ years","8 weeks (max)"]],
+    sections: [
+      { t: "No separate severance pay in BC", body: "Unlike Ontario, BC does not have a separate severance pay on top of termination pay. The statutory entitlement is limited to the table above. This makes the common law reasonable notice calculation even more important for BC employees, as it is almost always significantly higher than the statutory minimum." },
+      { t: "BC Employment Standards Branch", body: "Employees who believe their employer has not met statutory minimums can file a complaint with the BC Employment Standards Branch within 6 months of termination. However, this process only covers statutory entitlements, not common law notice. For common law claims, you need to file in court or negotiate directly." },
+    ]},
+  { id: "AB", name: "Alberta", esa: "Employment Standards Code, RSA 2000", table: [["< 3 months","None"],["3 months \u2013 2 years","1 week"],["2\u20134 years","2 weeks"],["4\u20136 years","4 weeks"],["6\u20138 years","5 weeks"],["8\u201310 years","6 weeks"],["10+ years","8 weeks (max)"]],
+    sections: [
+      { t: "Alberta's tiered structure", body: "Alberta uses a tiered system that jumps from 2 weeks (at 2\u20134 years) to 4 weeks (at 4\u20136 years), creating a significant step-up. Employers should be aware of this threshold. There is no separate severance pay in Alberta." },
+    ]},
+  { id: "QC", name: "Quebec", esa: "Act respecting labour standards", table: [["< 3 months","None"],["3\u201312 months","1 week"],["1\u20135 years","2 weeks"],["5\u201310 years","4 weeks"],["10+ years","8 weeks (max)"]],
+    sections: [
+      { t: "Quebec: a civil law jurisdiction", body: "Quebec is fundamentally different from every other Canadian province. It operates under the Civil Code of Qu\u00e9bec, not the common law system. The concept of reasonable notice exists under art. 2091 of the Civil Code, but courts apply different factors and precedents.\n\nWhile the Bardal factors (age, tenure, role, availability of comparable work) are influential, Quebec courts have their own body of jurisprudence. Estimates from common law provinces should be treated as rough approximations." },
+      { t: "Section 124: unjust dismissal", body: "Employees with 2+ years of continuous service who believe they were dismissed without good and sufficient cause can file a complaint under s. 124 of the ARLS. This is a powerful remedy that can result in reinstatement or compensation, separate from any notice entitlement." },
+      { t: "Psychological harassment protections", body: "Quebec has strong protections against psychological harassment (s. 81.18\u201381.20 ARLS). If the termination is connected to workplace harassment, additional remedies may be available." },
+    ]},
+  { id: "FED", name: "Federal", esa: "Canada Labour Code, Part III", table: [["< 12 months","None"],["12+ months","2 weeks + severance (see below)"]],
+    sections: [
+      { t: "Federal severance pay formula", body: "Federally regulated employees with 12+ months of continuous service receive both termination pay (2 weeks) and severance pay. Severance is calculated as 5 days' wages per year of service, with a minimum of 2 days' wages. This applies to banking, telecommunications, airlines, railways, interprovincial transportation, and other federally regulated industries." },
+      { t: "Section 240: unjust dismissal", body: "This is one of the strongest employee protections in Canada. Federally regulated employees with 12+ months of service who are dismissed without just cause can file an unjust dismissal complaint. Remedies may include reinstatement and compensation for lost wages. Strict time limits apply (90 days from dismissal).\n\nThis is a separate avenue from severance pay and can result in significantly more compensation." },
+    ]},
+  { id: "SK", name: "Saskatchewan", esa: "Saskatchewan Employment Act", table: [["< 3 months","None"],["3 months \u2013 1 year","1 week"],["1\u20133 years","2 weeks"],["3\u20135 years","4 weeks"],["5\u201310 years","6 weeks"],["10+ years","8 weeks (max)"]],
+    sections: []},
+  { id: "MB", name: "Manitoba", esa: "Employment Standards Code", table: [["< 3 months","None"],["3 months \u2013 1 year","1 week"],["1\u20133 years","2 weeks"],["3\u20135 years","4 weeks"],["5\u201310 years","6 weeks"],["10+ years","8 weeks (max)"]],
+    sections: []},
+  { id: "NS", name: "Nova Scotia", esa: "Labour Standards Code", table: [["< 3 months","None"],["3 months \u2013 2 years","1 week"],["2\u20135 years","2 weeks"],["5\u201310 years","4 weeks"],["10+ years","8 weeks (max)"]],
+    sections: [
+      { t: "Section 71: unjust dismissal (10+ years)", body: "Nova Scotia employees with 10+ years of continuous service have access to an unjust dismissal provision under s. 71 of the Labour Standards Code. This can result in reinstatement or compensation.\n\nImportant: employees in a managerial or supervisory capacity may be excluded from this provision. If you hold a management role, consult a lawyer to confirm whether the exemption applies." },
+    ]},
+  { id: "NB", name: "New Brunswick", esa: "Employment Standards Act", table: [["< 6 months","None"],["6 months \u2013 5 years","2 weeks"],["5+ years","4 weeks"]],
+    sections: []},
+  { id: "NL", name: "Newfoundland & Labrador", esa: "Labour Standards Act", table: [["< 3 months","None"],["3 months \u2013 2 years","1 week"],["2\u20135 years","2 weeks"],["5\u201310 years","3 weeks"],["10\u201315 years","4 weeks"],["15+ years","6 weeks"]],
+    sections: []},
+  { id: "PE", name: "Prince Edward Island", esa: "Employment Standards Act", table: [["< 6 months","None"],["6 months \u2013 5 years","2 weeks"],["5\u201310 years","4 weeks"],["10\u201315 years","6 weeks"],["15+ years","8 weeks"]],
+    sections: []},
+];
+
+function Guides({ onBack }) {
+  const [sel, setSel] = useState(null);
+  const g = sel ? GUIDE_DATA.find(x => x.id === sel) : null;
+  const T = "#0A6B5C";
+  const BF = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+  const HF = "'Instrument Serif', Georgia, serif";
+
+  return <div style={{ minHeight: "100vh", background: "linear-gradient(165deg, var(--bg-page-1) 0%, var(--bg-page-2) 40%, var(--bg-page-3) 100%)", color: "var(--text)", fontFamily: BF }}>
+    {/* Header */}
+    <div style={{ background: "linear-gradient(135deg, #0A6B5C 0%, #085D50 40%, #0B5A65 100%)", padding: "14px 20px" }}>
+      <div style={{ maxWidth: 520, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <Logo size={18} /><span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>Parachute</span>
+        </div>
+      </div>
+    </div>
+
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: "0 20px" }}>
+      {/* Back */}
+      <div style={{ padding: "12px 0 0" }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--text-muted)", padding: 0 }}>{"\u2190"} Back to Parachute</button>
+      </div>
+
+      {/* Intro */}
+      <div style={{ padding: "20px 0 24px", borderBottom: "2px solid " + T, marginBottom: 24 }}>
+        <h1 style={{ fontFamily: HF, fontSize: "clamp(28px, 7vw, 38px)", fontWeight: 400, lineHeight: 1.05, margin: "0 0 12px", color: "var(--text)" }}>Severance guides<br />by province</h1>
+        <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6, margin: 0 }}>Each province and territory in Canada has its own employment standards legislation with different statutory minimums. These guides break down what you're owed in plain English — the legal floor, the common law range, and the jurisdiction-specific rules that matter most.</p>
+      </div>
+
+      {/* Province selector */}
+      <p style={{ fontSize: 10, fontWeight: 700, color: T, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>Select a jurisdiction</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 28 }}>
+        {GUIDE_DATA.map(p => <button key={p.id} onClick={() => { setSel(sel === p.id ? null : p.id); }} style={{
+          padding: "7px 14px", borderRadius: 20, fontSize: 12, fontWeight: sel === p.id ? 600 : 400,
+          border: sel === p.id ? "2px solid " + T : "1.5px solid var(--border)",
+          background: sel === p.id ? "rgba(10,107,92,.06)" : "var(--bg-card)",
+          color: sel === p.id ? T : "var(--text-sec)",
+          cursor: "pointer", transition: "all .12s",
+        }}>{sel === p.id ? "\u2713 " : ""}{p.name}</button>)}
+      </div>
+
+      {/* Guide content */}
+      {g && <div style={{ animation: "fadeIn .25s ease" }}>
+        <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border-light)", padding: "18px", marginBottom: 16 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: T, textTransform: "uppercase", letterSpacing: ".05em", margin: "0 0 4px" }}>{g.name}</p>
+          <p style={{ fontSize: 13, color: "var(--text-sec)", margin: "0 0 2px" }}>{g.esa}</p>
+          <p style={{ fontSize: 10, color: "var(--text-dim)", margin: 0 }}>Last updated: April 2026</p>
+        </div>
+
+        {/* Statutory table */}
+        <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border-light)", overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ background: T, padding: "10px 16px", display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", textTransform: "uppercase", letterSpacing: ".05em" }}>Length of service</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", textTransform: "uppercase", letterSpacing: ".05em" }}>Minimum notice / pay</span>
+          </div>
+          {g.table.map(([tenure, notice], i) => <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 16px", borderBottom: i < g.table.length - 1 ? "1px solid var(--border-lighter)" : "none" }}>
+            <span style={{ fontSize: 12, color: "var(--text-sec)" }}>{tenure}</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text)" }}>{notice}</span>
+          </div>)}
+        </div>
+
+        <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border-light)", padding: "16px", marginBottom: 16 }}>
+          <p style={{ fontSize: 11, color: "var(--text-sec)", margin: 0, lineHeight: 1.55 }}>These are <strong>absolute minimums</strong>. Your employer cannot offer less. If they do, they are in violation of employment standards legislation. In virtually every case, employees are entitled to significantly more under common law.</p>
+        </div>
+
+        {/* Province-specific sections */}
+        {g.sections.map((s, i) => <div key={i} style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border-light)", padding: "16px", marginBottom: 16 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: T, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".03em" }}>{s.t}</p>
+          {s.body.split("\n\n").map((para, j) => <p key={j} style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 10px", lineHeight: 1.6 }}>{para}</p>)}
+        </div>)}
+
+        {/* Common law explanation */}
+        <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border-light)", padding: "16px", marginBottom: 16 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: T, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".03em" }}>Common law reasonable notice</p>
+          <p style={{ fontSize: 12, color: "var(--text-sec)", margin: "0 0 10px", lineHeight: 1.6 }}>The statutory minimums above are just the legal floor. In virtually every case, employees are entitled to significantly more under common law{g.id === "QC" ? " (or civil law in Quebec under art. 2091)" : ""}. Courts consider four main factors:</p>
+          {["Length of service — the single most important factor", "Age — older employees receive more because re-employment is harder", "Character of employment — senior roles receive more because comparable positions are scarcer", "Availability of similar employment — industry, specialization, and market conditions"].map((f, i) => <div key={i} style={{ display: "flex", gap: 6, marginBottom: 4, fontSize: 12, color: "var(--text-sec)", lineHeight: 1.4 }}>
+            <span style={{ color: T, flexShrink: 0 }}>{"\u2022"}</span><span>{f}</span>
+          </div>)}
+          <p style={{ fontSize: 12, color: "var(--text-sec)", margin: "10px 0 0", lineHeight: 1.6 }}>Common law notice periods typically range from 2 to 26 months, with most falling between 4 and 18 months.</p>
+        </div>
+
+        {/* CTA */}
+        <div style={{ background: T, borderRadius: 14, padding: "24px", textAlign: "center", marginBottom: 16 }}>
+          <p style={{ fontSize: 18, fontFamily: HF, color: "#fff", margin: "0 0 8px" }}>Calculate your severance in 2 minutes</p>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", margin: "0 0 16px" }}>Free. Private. No accounts. Covers all 14 jurisdictions.</p>
+          <button onClick={onBack} style={{ padding: "12px 36px", borderRadius: 50, border: "none", background: "#fff", color: "#053D32", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Start your free analysis →</button>
+        </div>
+
+        {/* What to do */}
+        <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border-light)", padding: "16px", marginBottom: 24 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: T, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: ".03em" }}>What to do in the first 72 hours</p>
+          {["Do not sign anything — especially a release — until you understand your full entitlements.", "Request everything in writing — termination letter, severance offer, and any release document.", "Calculate your entitlements — use Parachute to get a free, private analysis of what you may be owed.", "Consult an employment lawyer — most offer free initial consultations."].map((item, i) => <div key={i} style={{ display: "flex", gap: 6, marginBottom: 6, fontSize: 12, color: "var(--text-sec)", lineHeight: 1.5 }}>
+            <span style={{ color: T, flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span><span>{item}</span>
+          </div>)}
+        </div>
+      </div>}
+
+      {/* No selection state */}
+      {!sel && <div style={{ textAlign: "center", padding: "40px 0 60px" }}>
+        <p style={{ fontSize: 14, color: "var(--text-dim)" }}>Select a province or territory above to see the guide.</p>
+      </div>}
+
+      {/* Disclaimer */}
+      <div style={{ background: "var(--bg-warning)", borderRadius: 11, padding: "13px 15px", marginBottom: 10, border: "1px solid var(--border-warning)" }}>
+        <p style={{ fontSize: 10.5, color: "var(--text-warning)", margin: 0, lineHeight: 1.5 }}>These guides are for informational purposes only. They do not constitute legal advice. Employment legislation changes frequently. Consult a qualified employment lawyer in your jurisdiction for advice specific to your situation.</p>
+      </div>
+
+      {/* Footer */}
+      <div style={{ textAlign: "center", padding: "24px 0 40px" }}>
+        <p style={{ fontSize: 12, color: "var(--text-dim)" }}>&copy; {new Date().getFullYear()} Parachute. For informational purposes only.</p>
+      </div>
+    </div>
+  </div>;
+}
+
 /* ═══════════════════ APP ═══════════════════ */
 const EMPTY = { province: "", age: "", years: "", months: "", salary: "", bonus: "", role: "", jobTitle: "", sevElig: false, hasOffer: null, offFmt: "amt", offAmt: "", offWks: "", offMos: "", reason: "", induced: null, hasContract: null, contractTerms: false, contractAge: "", bens: [], industry: "", vacDays: "", signedRelease: null, deadline: null, deadlineDays: "", hasDependents: null, badFaith: null, newJob: "", nonCompete: null, empTermStatus: "", empDocLevel: "", empHumanRights: null, empGroupTerm: null };
 function loadSession() { try { const s = sessionStorage.getItem("p_state"); if (s) { const p = JSON.parse(s); return { step: p.step ?? -1, d: { ...EMPTY, ...p.d }, mode: p.mode ?? "employee" }; } } catch {} return null; }
@@ -1497,6 +1677,7 @@ export default function App() {
   const [d, setD] = useState(saved ? saved.d : EMPTY);
   const [res, setRes] = useState(null);
   const [fade, setFade] = useState(false);
+  const [page, setPage] = useState("main");
 
   useEffect(() => { if (step >= 1 && step <= 5) saveSession(step, d, mode); }, [step, d, mode]);
 
@@ -1507,7 +1688,9 @@ export default function App() {
 
   function reset() { setStep(-1); setRes(null); setD(EMPTY); setMode("employee"); try { sessionStorage.removeItem("p_state"); } catch {} window.scrollTo(0, 0); }
 
-  if (step === -1) return <><ThemeStyle dark={dark} /><Landing onStart={(m) => { setMode(m || "employee"); trk("analysis_started", { mode: m || "employee" }); setStep(1); }} /></>;
+  if (page === "guides") return <><ThemeStyle dark={dark} /><Guides onBack={() => { setPage("main"); window.scrollTo(0, 0); }} /></>;
+
+  if (step === -1) return <><ThemeStyle dark={dark} /><Landing onStart={(m) => { setMode(m || "employee"); trk("analysis_started", { mode: m || "employee" }); setStep(1); }} onGuides={() => { setPage("guides"); window.scrollTo(0, 0); trk("guides_opened"); }} /></>;
 
   return <><ThemeStyle dark={dark} /><div style={{ minHeight: "100vh", background: "linear-gradient(165deg, var(--bg-page-1) 0%, var(--bg-page-2) 40%, var(--bg-page-3) 100%)", color: "var(--text)", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif" }}>
     {step > 0 && step < 6 && <TopBar step={step} onBack={() => go(step === 1 ? -1 : step - 1)} dark={dark} setDark={setDark} />}
