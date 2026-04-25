@@ -372,26 +372,26 @@ function Landing({ onStart, onGuides }) {
 
         {/* Phase 1 */}
         <div ref={phase1Ref} style={{ ...PS, opacity: 1, transform: "translateY(-50%)" }}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Know what<br /><em style={{ fontStyle: "italic", color: "#C0D0FF" }}>you're owed.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Know what<br /><em style={{ fontStyle: "italic", color: "#3A6590" }}>you're owed.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Free severance analysis for all of Canada. Built on employment law, not guesswork.</p>
         </div>
 
         {/* Phase 2 */}
         <div ref={phase2Ref} style={PS}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Takes <em style={{ fontStyle: "italic", color: "#C0D0FF" }}>two minutes.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Takes <em style={{ fontStyle: "italic", color: "#3A6590" }}>two minutes.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Answer a few questions about your job, your termination, and your offer. We do the rest.</p>
         </div>
 
         {/* Phase 3 */}
         <div ref={phase3Ref} style={PS}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Everything you need.<br /><em style={{ fontStyle: "italic", color: "#C0D0FF" }}>Nothing you don't.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Everything you need.<br /><em style={{ fontStyle: "italic", color: "#3A6590" }}>Nothing you don't.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Severance estimates, a negotiation letter, a strategy memo, and a report for your lawyer.</p>
         </div>
 
         {/* Phase 4: CTAs */}
         <div ref={phase4Ref} style={PS}>
           {!showTerms ? <>
-            <h2 style={{ fontFamily: HF, fontSize: "clamp(32px, 9vw, 52px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 28 }}>Ready to<br /><em style={{ fontStyle: "italic", color: "#C0D0FF" }}>land safely?</em></h2>
+            <h2 style={{ fontFamily: HF, fontSize: "clamp(32px, 9vw, 52px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 28 }}>Ready to<br /><em style={{ fontStyle: "italic", color: "#3A6590" }}>land safely?</em></h2>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               <div style={{ position: "relative", display: "inline-block" }}>
                 <div style={{ position: "absolute", top: "50%", left: "50%", width: 200, height: 60, borderRadius: 60, background: "radial-gradient(ellipse, rgba(100,220,180,.3) 0%, rgba(60,120,220,.15) 50%, transparent 80%)", filter: "blur(20px)", animation: "ctaGlow 3s ease-in-out infinite", zIndex: 0, pointerEvents: "none" }} />
