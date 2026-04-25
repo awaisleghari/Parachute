@@ -235,31 +235,16 @@ function Landing({ onStart, onGuides }) {
         doodleRef.current.firstChild.style.transform = "rotate(" + rot + "deg) scale(" + sc + ")";
 
         // Dissolve doodle bottom-to-top when entering the text zone
-        // and when approaching CTAs
-        var doodleTop = y;
+        // Once dissolved, stay hidden through CTAs
         var doodleBot = y + dH;
         var textTop = vh * 0.3;
-        var textBot = vh * 0.7;
 
-        var revealPct = 1; // 1 = fully visible, 0 = fully hidden
+        var revealPct = 1;
 
-        if (p >= 0.72) {
-          // CTA phase: dissolve out
-          revealPct = Math.max(0, 1 - (p - 0.72) / 0.12);
-        } else if (doodleBot > textTop && doodleTop < textBot) {
-          // Doodle overlaps with text zone
-          if (doodleTop < textTop) {
-            // Entering from above: hide from bottom based on overlap
-            var overlap = doodleBot - textTop;
-            revealPct = Math.max(0, 1 - overlap / dH);
-          } else if (doodleBot > textBot) {
-            // Exiting below: reveal from top based on how much cleared
-            var cleared = doodleTop - textBot;
-            revealPct = Math.max(0, Math.min(1, cleared / dH));
-          } else {
-            // Fully inside text zone
-            revealPct = 0;
-          }
+        if (doodleBot > textTop) {
+          // Doodle bottom has reached the text zone — dissolve from bottom up
+          var overlap = doodleBot - textTop;
+          revealPct = Math.max(0, 1 - overlap / dH);
         }
 
         if (revealPct >= 0.99) {
@@ -387,26 +372,26 @@ function Landing({ onStart, onGuides }) {
 
         {/* Phase 1 */}
         <div ref={phase1Ref} style={{ ...PS, opacity: 1, transform: "translateY(-50%)" }}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Know what<br /><em style={{ fontStyle: "italic", color: "#E0FFF4" }}>you're owed.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Know what<br /><em style={{ fontStyle: "italic", color: "#C0D0FF" }}>you're owed.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Free severance analysis for all of Canada. Built on employment law, not guesswork.</p>
         </div>
 
         {/* Phase 2 */}
         <div ref={phase2Ref} style={PS}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Takes <em style={{ fontStyle: "italic", color: "#E0FFF4" }}>two minutes.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Takes <em style={{ fontStyle: "italic", color: "#C0D0FF" }}>two minutes.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Answer a few questions about your job, your termination, and your offer. We do the rest.</p>
         </div>
 
         {/* Phase 3 */}
         <div ref={phase3Ref} style={PS}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Everything you need.<br /><em style={{ fontStyle: "italic", color: "#E0FFF4" }}>Nothing you don't.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Everything you need.<br /><em style={{ fontStyle: "italic", color: "#C0D0FF" }}>Nothing you don't.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Severance estimates, a negotiation letter, a strategy memo, and a report for your lawyer.</p>
         </div>
 
         {/* Phase 4: CTAs */}
         <div ref={phase4Ref} style={PS}>
           {!showTerms ? <>
-            <h2 style={{ fontFamily: HF, fontSize: "clamp(32px, 9vw, 52px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 28 }}>Ready to<br /><em style={{ fontStyle: "italic", color: "#E0FFF4" }}>land safely?</em></h2>
+            <h2 style={{ fontFamily: HF, fontSize: "clamp(32px, 9vw, 52px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 28 }}>Ready to<br /><em style={{ fontStyle: "italic", color: "#C0D0FF" }}>land safely?</em></h2>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               <div style={{ position: "relative", display: "inline-block" }}>
                 <div style={{ position: "absolute", top: "50%", left: "50%", width: 200, height: 60, borderRadius: 60, background: "radial-gradient(ellipse, rgba(100,220,180,.3) 0%, rgba(60,120,220,.15) 50%, transparent 80%)", filter: "blur(20px)", animation: "ctaGlow 3s ease-in-out infinite", zIndex: 0, pointerEvents: "none" }} />
