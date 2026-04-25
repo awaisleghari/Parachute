@@ -299,7 +299,7 @@ function Landing({ onStart, onGuides }) {
 
   const PS = { position: "absolute", width: "100%", textAlign: "center", padding: "0 32px", zIndex: 5, top: "50%", opacity: 0, transform: "translateY(-40%)", transition: "opacity .4s ease, transform .4s ease", pointerEvents: "none" };
 
-  return <div style={{ color: "#fff", fontFamily: BF, position: "relative", overflow: "hidden" }}>
+  return <div style={{ color: "#fff", fontFamily: BF, position: "relative" }}>
     <div style={{ position: "fixed", inset: 0, background: "linear-gradient(180deg, #021E19 0%, #032F28 25%, #0A6B5C 50%, #085D50 70%, #0B5A65 90%, #0A2540 100%)", zIndex: 0 }} />
     <div style={{ position: "fixed", inset: 0, opacity: .025, zIndex: 0, pointerEvents: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundSize: "128px" }} />
     <style>{`@keyframes ctaGlow { 0%,100% { opacity: .4; transform: translate(-50%,-50%) scale(1); } 50% { opacity: .6; transform: translate(-50%,-50%) scale(1.1); } } @keyframes scrollPulse { 0%,100% { opacity:.4 } 50% { opacity:.8 } }`}</style>
