@@ -290,13 +290,6 @@ function Landing({ onStart, onGuides }) {
     { top: "84%", right: "10%", w: 72, vb: "0 0 72 20", d: "M5 15 Q18 5 34 13 Q48 4 68 14" },
   ];
 
-  const features = [
-    { k: "calc", t: "Severance estimates", d: "Statutory minimums and common law court ranges, calculated from your actual numbers and explained in plain English.", tint: "rgba(159,225,203,.12)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> },
-    { k: "letter", t: "Negotiation letter", d: "Five tone-calibrated letters, from aggressive to strategic, matched to how your offer compares.", tint: "rgba(80,200,170,.1)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> },
-    { k: "plan", t: "Action plan", d: "Timed checklists from day one through your first lawyer meeting, so you don't miss critical deadlines.", tint: "rgba(130,180,255,.1)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> },
-    { k: "report", t: "Lawyer report", d: "A structured intake summary you can send ahead of your first meeting. It saves time, and saves you money.", tint: "rgba(200,160,255,.08)", icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
-  ];
-
   const PS = { position: "absolute", width: "100%", textAlign: "center", padding: "0 32px", zIndex: 5, top: "50%", opacity: 0, transform: "translateY(-40%)", transition: "opacity .4s ease, transform .4s ease", pointerEvents: "none" };
 
   return <div style={{ color: "#fff", fontFamily: BF, position: "relative" }}>
@@ -314,7 +307,7 @@ function Landing({ onStart, onGuides }) {
         </div>)}
 
         {/* Doodle */}
-        <div ref={doodleRef} style={{ position: "absolute", willChange: "transform", zIndex: 10 }}>
+        <div ref={doodleRef} style={{ position: "absolute", willChange: "transform", zIndex: 2 }}>
           <div>
             <svg width="200" viewBox="0 0 140 200" fill="none" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,.3))" }}>
               <path d="M20 60 Q30 10 70 8 Q110 10 120 60" fill="rgba(159,225,203,.12)" stroke="#9FE1CB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -396,32 +389,6 @@ function Landing({ onStart, onGuides }) {
           <p style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: ".15em", color: "rgba(159,225,203,.35)", margin: 0 }}>Scroll</p>
         </div>
       </div>
-    </div>
-
-    {/* FEATURES */}
-    <div style={{ position: "relative", zIndex: 1, padding: "80px 28px 100px", background: "#0A2540" }}>
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: Tl, textTransform: "uppercase", letterSpacing: ".15em", marginBottom: 12, textAlign: "center" }}>What you get</p>
-        <h2 style={{ fontFamily: HF, fontSize: "clamp(28px, 7vw, 42px)", fontWeight: 400, textAlign: "center", margin: "0 0 56px", lineHeight: 1.1 }}>Everything you need.<br /><span style={{ fontStyle: "italic", color: Tl }}>Nothing you don't.</span></h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
-          {features.map(f => <div key={f.k} onMouseEnter={() => setHov(f.k)} onMouseLeave={() => setHov(null)} style={{ display: "flex", gap: 20, alignItems: "flex-start", padding: "24px 28px", borderRadius: 18, background: hov === f.k ? f.tint : "rgba(255,255,255,.03)", border: "1px solid " + (hov === f.k ? "rgba(255,255,255,.12)" : "rgba(255,255,255,.05)"), transform: hov === f.k ? "translateX(4px)" : "translateX(0)", transition: "all .25s cubic-bezier(.25,1,.5,1)", cursor: "default" }}>
-            <div style={{ color: hov === f.k ? "#fff" : "rgba(255,255,255,.4)", transition: "color .2s", flexShrink: 0, marginTop: 2 }}>{f.icon}</div>
-            <div><p style={{ fontSize: 17, fontWeight: 600, margin: "0 0 6px" }}>{f.t}</p><p style={{ fontSize: 14, color: "rgba(255,255,255,.5)", margin: 0, lineHeight: 1.6 }}>{f.d}</p></div>
-          </div>)}
-        </div>
-      </div>
-    </div>
-
-    {/* TRUST FOOTER */}
-    <div style={{ position: "relative", zIndex: 1, padding: "0 28px 60px", textAlign: "center", background: "#0A2540" }}>
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "32px", borderRadius: 20, background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.06)" }}>
-        <p style={{ fontSize: 22, fontFamily: HF, margin: "0 0 12px" }}>Built for real people,<br />in real situations.</p>
-        <p style={{ fontSize: 14, color: "rgba(255,255,255,.5)", lineHeight: 1.65, margin: "0 0 24px" }}>Parachute was built by a Canadian lawyer who saw the information gap firsthand. It's free, it's private, and it's not going anywhere.</p>
-        <div style={{ display: "flex", justifyContent: "center", gap: 24 }}>
-          {[{ v: "No accounts" }, { v: "No tracking" }, { v: "No cost" }].map(x => <div key={x.v}><p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 2px" }}>{x.v}</p><p style={{ fontSize: 12, color: "rgba(255,255,255,.3)", margin: 0 }}>Ever.</p></div>)}
-        </div>
-      </div>
-      <p style={{ fontSize: 12, color: "rgba(255,255,255,.2)", marginTop: 32 }}>&copy; {new Date().getFullYear()} Parachute. For informational purposes only.</p>
     </div>
   </div>;
 }
