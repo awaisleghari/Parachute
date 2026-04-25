@@ -326,6 +326,12 @@ function Landing({ onStart, onGuides }) {
     <div ref={sceneRef} style={{ position: "relative", height: "300vh" }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", width: "100%", overflow: "hidden", zIndex: 1 }}>
 
+        {/* Logo */}
+        <div style={{ position: "absolute", top: 24, left: "50%", transform: "translateX(-50%)", zIndex: 15, display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 18px 8px 12px", borderRadius: 50, background: "rgba(255,255,255,.06)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,.08)" }}>
+          <Logo size={18} color="#fff" />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: ".02em", fontFamily: BF }}>Parachute</span>
+        </div>
+
         {/* Clouds */}
         {cloudData.map((c, i) => <div key={i} ref={el => cloudRefs.current[i] = el} style={{ position: "absolute", top: c.top, left: c.left, right: c.right, width: c.w, pointerEvents: "none", opacity: 0, transition: "opacity .6s ease, transform .6s ease" }}>
           <svg viewBox={c.vb} style={{ width: "100%" }}><path d={c.d} fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="1.5" strokeLinecap="round" /></svg>
