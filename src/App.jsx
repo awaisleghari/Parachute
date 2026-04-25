@@ -231,6 +231,31 @@ function Landing({ onStart, onGuides }) {
         const sc = 1 - p * 0.15;
         doodleRef.current.style.transform = "translate(" + (cx + sx) + "px," + y + "px)";
         doodleRef.current.firstChild.style.transform = "rotate(" + rot + "deg) scale(" + sc + ")";
+
+        // Hide doodle when it overlaps the text zone (middle 40% of viewport)
+        // and fade out completely at the CTA phase
+        var doodleCenter = y + dH * 0.5;
+        var textTop = vh * 0.3;
+        var textBot = vh * 0.7;
+        var fadeZone = vh * 0.08;
+
+        // Text zone opacity: 0 when center is in text area, 1 when clear
+        var textOpacity = 1;
+        if (doodleCenter > textTop - fadeZone && doodleCenter < textBot + fadeZone) {
+          if (doodleCenter < textTop) {
+            textOpacity = (textTop - doodleCenter) / fadeZone;
+          } else if (doodleCenter > textBot) {
+            textOpacity = (doodleCenter - textBot) / fadeZone;
+          } else {
+            textOpacity = 0;
+          }
+        }
+
+        // CTA fade: disappear as we approach the final phase
+        var ctaOpacity = p >= 0.75 ? Math.max(0, 1 - (p - 0.75) / 0.08) : 1;
+
+        // Take the lower of the two
+        doodleRef.current.style.opacity = String(Math.max(0, Math.min(1, Math.min(textOpacity, ctaOpacity))));
       }
 
       // Phases
