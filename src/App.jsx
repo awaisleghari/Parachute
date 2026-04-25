@@ -227,40 +227,57 @@ function Landing({ onStart, onGuides }) {
         const startY = -dH + 20;
         const endY = vh - dH - 30;
         const y = startY + (endY - startY) * p;
-        const sx = Math.sin(p * Math.PI * 4) * 25;
-        const cx = vw / 2 - 100;
-        const rot = Math.sin(p * Math.PI * 3) * 3;
-        const sc = 1 - p * 0.15;
-        doodleRef.current.style.transform = "translate(" + (cx + sx) + "px," + y + "px)";
-        doodleRef.current.firstChild.style.transform = "rotate(" + rot + "deg) scale(" + sc + ")";
+        const isDesktop = vw >= 768;
 
-        // Dissolve doodle bottom-to-top when entering the text zone
-        // Once dissolved, stay hidden through CTAs
-        var doodleBot = y + dH;
-        var textTop = vh * 0.3;
+        if (isDesktop) {
+          // Desktop: doodle stays on the right side, no dissolve needed
+          var sx = Math.sin(p * Math.PI * 3) * 15;
+          var dx = vw * 0.72 + sx;
+          var rot = Math.sin(p * Math.PI * 3) * 3;
+          var sc = 1 - p * 0.12;
+          doodleRef.current.style.transform = "translate(" + dx + "px," + y + "px)";
+          doodleRef.current.firstChild.style.transform = "rotate(" + rot + "deg) scale(" + sc + ")";
 
-        var revealPct = 1;
-
-        if (doodleBot > textTop) {
-          // Doodle bottom has reached the text zone — dissolve from bottom up
-          var overlap = doodleBot - textTop;
-          revealPct = Math.max(0, 1 - overlap / dH);
-        }
-
-        if (revealPct >= 0.99) {
-          doodleRef.current.style.maskImage = "none";
-          doodleRef.current.style.webkitMaskImage = "none";
-          doodleRef.current.style.opacity = "1";
-        } else if (revealPct <= 0.01) {
-          doodleRef.current.style.opacity = "0";
+          // Gentle fade out at the very end for CTAs
+          if (p >= 0.82) {
+            doodleRef.current.style.opacity = String(Math.max(0, 1 - (p - 0.82) / 0.1));
+          } else {
+            doodleRef.current.style.opacity = "1";
+          }
           doodleRef.current.style.maskImage = "none";
           doodleRef.current.style.webkitMaskImage = "none";
         } else {
-          doodleRef.current.style.opacity = "1";
-          var pct = Math.round(revealPct * 100);
-          var mask = "linear-gradient(to bottom, black 0%, black " + pct + "%, transparent " + Math.min(100, pct + 18) + "%)";
-          doodleRef.current.style.maskImage = mask;
-          doodleRef.current.style.webkitMaskImage = mask;
+          // Mobile: centered with bottom-to-top dissolve through text
+          var sx = Math.sin(p * Math.PI * 4) * 25;
+          var cx = vw / 2 - 100;
+          var rot = Math.sin(p * Math.PI * 3) * 3;
+          var sc = 1 - p * 0.15;
+          doodleRef.current.style.transform = "translate(" + (cx + sx) + "px," + y + "px)";
+          doodleRef.current.firstChild.style.transform = "rotate(" + rot + "deg) scale(" + sc + ")";
+
+          // Dissolve bottom-to-top when entering text zone, stay gone
+          var doodleBot = y + dH;
+          var textTop = vh * 0.3;
+          var revealPct = 1;
+          if (doodleBot > textTop) {
+            var overlap = doodleBot - textTop;
+            revealPct = Math.max(0, 1 - overlap / dH);
+          }
+          if (revealPct >= 0.99) {
+            doodleRef.current.style.maskImage = "none";
+            doodleRef.current.style.webkitMaskImage = "none";
+            doodleRef.current.style.opacity = "1";
+          } else if (revealPct <= 0.01) {
+            doodleRef.current.style.opacity = "0";
+            doodleRef.current.style.maskImage = "none";
+            doodleRef.current.style.webkitMaskImage = "none";
+          } else {
+            doodleRef.current.style.opacity = "1";
+            var pct = Math.round(revealPct * 100);
+            var mask = "linear-gradient(to bottom, black 0%, black " + pct + "%, transparent " + Math.min(100, pct + 18) + "%)";
+            doodleRef.current.style.maskImage = mask;
+            doodleRef.current.style.webkitMaskImage = mask;
+          }
         }
       }
 
@@ -372,26 +389,26 @@ function Landing({ onStart, onGuides }) {
 
         {/* Phase 1 */}
         <div ref={phase1Ref} style={{ ...PS, opacity: 1, transform: "translateY(-50%)" }}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Know what<br /><em style={{ fontStyle: "italic", color: "#8CB8DC" }}>you're owed.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Know what<br /><em style={{ fontStyle: "italic", color: "#9FE1CB" }}>you're owed.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Free severance analysis for all of Canada. Built on employment law, not guesswork.</p>
         </div>
 
         {/* Phase 2 */}
         <div ref={phase2Ref} style={PS}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Takes <em style={{ fontStyle: "italic", color: "#8CB8DC" }}>two minutes.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Takes <em style={{ fontStyle: "italic", color: "#9FE1CB" }}>two minutes.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Answer a few questions about your job, your termination, and your offer. We do the rest.</p>
         </div>
 
         {/* Phase 3 */}
         <div ref={phase3Ref} style={PS}>
-          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Everything you need.<br /><em style={{ fontStyle: "italic", color: "#8CB8DC" }}>Nothing you don't.</em></h2>
+          <h2 style={{ fontFamily: HF, fontSize: "clamp(36px, 10vw, 60px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 12 }}>Everything you need.<br /><em style={{ fontStyle: "italic", color: "#9FE1CB" }}>Nothing you don't.</em></h2>
           <p style={{ fontSize: "clamp(14px, 3.5vw, 17px)", color: "rgba(255,255,255,.7)", lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>Severance estimates, a negotiation letter, a strategy memo, and a report for your lawyer.</p>
         </div>
 
         {/* Phase 4: CTAs */}
         <div ref={phase4Ref} style={PS}>
           {!showTerms ? <>
-            <h2 style={{ fontFamily: HF, fontSize: "clamp(32px, 9vw, 52px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 28 }}>Ready to<br /><em style={{ fontStyle: "italic", color: "#8CB8DC" }}>land safely?</em></h2>
+            <h2 style={{ fontFamily: HF, fontSize: "clamp(32px, 9vw, 52px)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "-.02em", marginBottom: 28 }}>Ready to<br /><em style={{ fontStyle: "italic", color: "#9FE1CB" }}>land safely?</em></h2>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               <div style={{ position: "relative", display: "inline-block" }}>
                 <div style={{ position: "absolute", top: "50%", left: "50%", width: 200, height: 60, borderRadius: 60, background: "radial-gradient(ellipse, rgba(100,220,180,.3) 0%, rgba(60,120,220,.15) 50%, transparent 80%)", filter: "blur(20px)", animation: "ctaGlow 3s ease-in-out infinite", zIndex: 0, pointerEvents: "none" }} />
