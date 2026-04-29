@@ -343,7 +343,7 @@ function Landing({ onStart, onGuides }) {
   return <div style={{ color: "#fff", fontFamily: BF, position: "relative" }}>
     <div style={{ position: "fixed", inset: 0, background: "linear-gradient(180deg, #021E19 0%, #032F28 25%, #0A6B5C 50%, #085D50 70%, #0B5A65 90%, #0A2540 100%)", zIndex: 0 }} />
     <div style={{ position: "fixed", inset: 0, opacity: .025, zIndex: 0, pointerEvents: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundSize: "128px" }} />
-    <style>{`@keyframes ctaGlow { 0%,100% { opacity: .4; transform: translate(-50%,-50%) scale(1); } 50% { opacity: .6; transform: translate(-50%,-50%) scale(1.1); } } @keyframes scrollPulse { 0%,100% { opacity:.4 } 50% { opacity:.8 } }`}</style>
+    <style>{`@keyframes ctaGlow { 0%,100% { opacity: .4; transform: translate(-50%,-50%) scale(1); } 50% { opacity: .6; transform: translate(-50%,-50%) scale(1.1); } } @keyframes scrollPulse { 0%,100% { opacity:.4 } 50% { opacity:.8 } } @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(8px); } }`}</style>
 
     {/* SCROLL SCENE */}
     <div ref={sceneRef} style={{ position: "relative", height: "300vh" }}>
@@ -438,9 +438,11 @@ function Landing({ onStart, onGuides }) {
         </div>
 
         {/* Scroll hint */}
-        <div ref={hintRef} style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", textAlign: "center", zIndex: 20, pointerEvents: "none" }}>
-          <div style={{ width: 1, height: 28, background: "linear-gradient(180deg, rgba(159,225,203,.4) 0%, transparent 100%)", margin: "0 auto 6px", animation: "scrollPulse 2s ease-in-out infinite" }} />
-          <p style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: ".15em", color: "rgba(159,225,203,.35)", margin: 0 }}>Scroll</p>
+        <div ref={hintRef} style={{ position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)", textAlign: "center", zIndex: 20, pointerEvents: "none" }}>
+          <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.5)", margin: "0 0 10px", letterSpacing: ".06em", fontFamily: BF }}>Scroll to explore</p>
+          <div style={{ animation: "bounce 1.8s ease-in-out infinite" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          </div>
         </div>
       </div>
     </div>
